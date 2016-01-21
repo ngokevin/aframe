@@ -54820,8 +54820,8 @@ function createOrientationModal (exitVRHandler) {
 
   // Hide modal and exit VR on close.
   exit.addEventListener('click', function () {
-    modal.classList.add(HIDDEN_CLASS);
     exitVRHandler();
+    modal.classList.add(HIDDEN_CLASS);
   });
 
   modal.appendChild(exit);
