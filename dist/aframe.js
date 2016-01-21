@@ -57006,10 +57006,10 @@ var AScene = module.exports = registerElement('a-scene', {
      */
     enterVR: {
       value: function (event) {
+        this.setStereoRenderer();
         if (isMobile) {
           setFullscreen(this.canvas);
         } else {
-          this.setStereoRenderer();
           this.stereoRenderer.setFullScreen(true);
         }
         this.addState('vr-mode');
