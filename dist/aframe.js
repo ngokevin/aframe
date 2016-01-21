@@ -54806,6 +54806,10 @@ function createEnterVR (enterVRHandler, isMobile) {
   }
 }
 
+/**
+ * Create a modal that tells mobile users to orient the phone to landscape.
+ * Add a close button that if clicked, exits VR and closes the modal.
+ */
 function createOrientationModal (exitVRHandler) {
   var modal = document.createElement('div');
   modal.className = ORIENTATION_MODAL_CLASS;
@@ -54813,7 +54817,13 @@ function createOrientationModal (exitVRHandler) {
 
   var exit = document.createElement('button');
   exit.innerHTML = 'Exit VR';
-  exit.addEventListener('click', exitVRHandler);
+
+  // Hide modal and exit VR on close.
+  exit.addEventListener('click', function () {
+    modal.classList.add(HIDDEN_CLASS);
+    exitVRHandler();
+  });
+
   modal.appendChild(exit);
 
   return modal;
