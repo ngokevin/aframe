@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Animation</title>
+    <meta name="description" content="Animation - A-Frame">
+    <script src="../../dist/aframe.js"></script>
+    <script>AFRAME.registerShader('grain', { schema: { x: { default: '' } } });</script>
+  </head>
+  <body>
+    <a-scene>
+      <a-assets>
+        <a-mixin id="mat" geometry="primitive: sphere" material="shader: grain"></a-mixin>
+      </a-assets>
+
+      <a-entity mixin="mat"></a-entity>
+    </a-scene>
+  </body>
+</html>
