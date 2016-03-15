@@ -58773,6 +58773,14 @@ console.log('A-Frame Version:', pkg.version);
 console.log('three Version:', pkg.dependencies['three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
 
+window.addEventListener('resize', function(){
+  onResize();
+});
+function onResize(){
+  document.querySelector('html').style.height = window.innerHeight + 'px';
+};
+onResize();
+
 module.exports = window.AFRAME = {
   AEntity: AEntity,
   ANode: ANode,
