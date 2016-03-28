@@ -4,13 +4,16 @@ var utils = require('../utils/');
 
 var EVENTS = {
   CLICK: 'cursor-click',
-  FUSING: 'cursor-fusing',
-  HOVERED: 'cursor-hovered',
-  HOVERING: 'cursor-hovering',
   MOUSEENTER: 'cursor-mouseenter',
   MOUSEDOWN: 'cursor-mousedown',
   MOUSELEAVE: 'cursor-mouseleave',
   MOUSEUP: 'cursor-mouseup'
+};
+
+var STATES = {
+  FUSING: 'cursor-fusing',
+  HOVERING: 'cursor-hovering',
+  HOVERED: 'cursor-hovered'
 };
 
 /**
@@ -116,15 +119,15 @@ module.exports.Component = registerComponent('cursor', {
     this.intersectedEl = intersectedEl;
 
     // Hovering.
-    intersectedEl.addState(EVENTS.HOVERED);
+    el.addState(STATES.HOVERING);
+    intersectedEl.addState(STATES.HOVERED);
     intersectedEl.emit(EVENTS.MOUSEENTER);
-    el.addState(EVENTS.HOVERING);
 
     // Begin fuse if necessary.
     if (data.timeout === 0 || !data.fuse) { return; }
-    el.addState(EVENTS.FUSING);
+    el.addState(STATES.FUSING);
     this.fuseTimeout = setTimeout(function fuse () {
-      el.removeState(EVENTS.FUSING);
+      el.removeState(STATES.FUSING);
       self.twoWayEmit(EVENTS.CLICK);
     }, data.timeout);
   },
