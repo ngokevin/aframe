@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Performance - Material and Texture Caching</title>
+    <meta name="description" content="Performance - Material and Texture Caching - A-Frame">
+    <script src="../../dist/aframe.js"></script>
+    <style>
+      body { background-color: black; }
+    </style>
+  </head>
+  <body>
+    <a-scene stats="true">
+      <a-assets>
+        <img id="grass" src="img/grass.jpg">
+        <img id="stone" src="img/stone.jpg">
+
+        <a-mixin id="block"
+                 geometry="primitive: box; height: 1; width: 1; depth: 1"></a-mixin>
+        <a-mixin id="grass" material="src: #grass"></a-mixin>
+        <a-mixin id="stone" material="src: #stone"></a-mixin>
+      </a-assets>
+
+      <a-entity mixin="grass block" position="-1 0 0"></a-entity>
+      <a-entity mixin="grass block" position="0 0 0"></a-entity>
+      <a-entity mixin="stone block" position="1 0 0"></a-entity>
+      <a-entity mixin="stone block" position="2 0 0"></a-entity>
+    </a-scene>
+  </body>
+</html>
