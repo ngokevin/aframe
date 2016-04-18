@@ -18,6 +18,7 @@ module.exports.updateMap = function (shader, data) {
   }
 
   // Texture removed.
+  if (!material.map) { return; }
   setMap(null);
 
   function setMap (texture) {
