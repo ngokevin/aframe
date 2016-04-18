@@ -20,12 +20,10 @@ var propertyToThreeMapping = {
  * Shaders extend the material component API for custom three.js materials. The default
  * custom materials revolve around ShaderMaterial to enable custom shaders.
  *
- * @param {array} els - Entities subscribed to this shader. Mainly to receive events.
- * @param {Element} sceneEl - Scene, mainly to access systems.
+ * @param {Element} el - Entity.
  */
-var Shader = module.exports.Shader = function (sceneEl) {
-  this.els = [];
-  this.sceneEl = sceneEl;
+var Shader = module.exports.Shader = function (el) {
+  this.el = el;
 };
 
 Shader.prototype = {
@@ -123,17 +121,6 @@ Shader.prototype = {
         return value;
       }
     }
-  },
-
-  subscribeEl: function (el) {
-    if (!el) { return; }
-    this.els.push(el);
-  },
-
-  unsubscribeEl: function (el) {
-    var index = this.els.indexOf(el);
-    if (index === -1) { return; }
-    this.els.splice(index, 1);
   }
 };
 
@@ -159,7 +146,7 @@ module.exports.registerShader = function (name, definition) {
   if (shaders[name]) {
     throw new Error('The shader ' + name + ' has been already registered');
   }
-  NewShader = function (sceneEl) { Shader.call(this, sceneEl); };
+  NewShader = function (el) { Shader.call(this, el); };
   NewShader.prototype = Object.create(Shader.prototype, proto);
   NewShader.prototype.name = name;
   NewShader.prototype.constructor = NewShader;

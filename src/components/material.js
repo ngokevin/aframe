@@ -20,6 +20,7 @@ var shaderNames = shader.shaderNames;
 module.exports.Component = registerComponent('material', {
   schema: {
     shader: { default: 'standard', oneOf: shaderNames },
+    skipCache: { default: true },
     transparent: { default: false },
     opacity: { default: 1.0, min: 0.0, max: 1.0 },
     side: { default: 'front', oneOf: ['front', 'back', 'double'] },
@@ -39,21 +40,19 @@ module.exports.Component = registerComponent('material', {
     var data = this.data;
     var dataDiff = oldData ? diff(oldData, data) : data;
     var el = this.el;
-    var material;
     var mesh = this.el.getOrCreateObject3D('mesh', THREE.Mesh);
     var system = this.system;
 
+    // If shader has changed, ask material system for new material.
     if (!this.material || dataDiff.shader) {
-      // If shader has changed, ask material system for the material.
-      if (this.material) { system.unuseMaterial(oldData); }
-      material = system.getOrCreateMaterial(data, el);
-    } else {
-      // If shader has not changed, ask material system to update the material.
-      material = system.getUpdatedMaterial(data, oldData, el);
+      if (this.material) { system.unuseShader(shader); }
+      this.shader = system.createShader(el, data);
+      // Set material on mesh.
+      mesh.material = this.material = this.shader.material;
     }
 
-    // Set material on mesh.
-    mesh.material = this.material = material;
+    // If shader has not changed, ask material system to update the material.
+    system.updateShader(this.shader, data);
   },
 
   /**
@@ -63,8 +62,8 @@ module.exports.Component = registerComponent('material', {
   remove: function () {
     var mesh = this.el.getObject3D('mesh');
     if (!mesh) { return; }
+    this.system.unuseShader(shader);
     mesh.material = dummyMaterial;
-    this.system.unuseMaterial(this.data);
   },
 
   /**
