@@ -56522,7 +56522,7 @@ module.exports={
     "test:ci": "TEST_ENV=ci karma start ./tests/karma.conf.js --single-run --browsers firefox_latest",
     "version": "npm run dist"
   },
-  "repository": "aframevr/aframe",
+  "repository": "aframevr/aframe-fork",
   "license": "MIT",
   "dependencies": {
     "browserify-css": "^0.8.2",
