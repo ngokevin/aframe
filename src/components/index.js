@@ -8,6 +8,7 @@ require('./geometry');
 require('./gltf-model');
 require('./hand-controls');
 require('./light');
+require('./link');
 require('./look-controls');
 require('./material');
 require('./obj-model');

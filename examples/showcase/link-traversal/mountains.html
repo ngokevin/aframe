@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Links</title>
+    <meta name="description" content="Links – A-Frame">
+    <script src="../../../dist/aframe.js"></script>
+    <script src="js/highlight.js"></script>
+    <script src="js/ground.js"></script>
+
+    <script src="shaders/skyGradient.js"></script>
+  </head>
+  <body>
+    <a-scene fog="color: #47c9ff; near: 0; far: 65;">
+      <a-assets>
+        <img id="thumbHome" crossOrigin="anonymous" src="https://cdn.aframe.io/link-traversal/thumbs/home.png">
+        <img id="thumbSunrise" crossOrigin="anonymous" src="https://cdn.aframe.io/link-traversal/thumbs/sunrise.png">
+        <img id="thumbCity" crossOrigin="anonymous" src="https://cdn.aframe.io/link-traversal/thumbs/city.png">
+        <a-mixin id="highlight" highlight="color: white"></a-mixin>
+        <a-mixin id="highlight-hovered" highlight="color: #ef2d5e" scale="1.3 1.3 1.3"></a-mixin>
+        <a-mixin id="cursor"
+                 cursor="fuse: true;"
+                 geometry="primitive: ring; radiusOuter: 0.015;
+                              radiusInner: 0.01; segmentsTheta: 32"
+                 material="color: yellow; shader: flat"
+                 raycaster="far: 30"
+                 position="0 0 -0.75"></a-mixin>
+        <a-mixin id="cursor-hovering" material="color: springgreen"></a-mixin>
+      </a-assets>
+      <a-link mixin="highlight" href="index.html" position="-1.5 1.8 -1" src="#thumbHome"> </a-link>
+      <a-link mixin="highlight" href="sunrise.html" position="0 1.8 -1" src="#thumbSunrise"></a-link>
+      <a-link mixin="highlight" href="city.html" position="1.5 1.8 -1" src="#thumbCity"></a-link>
+      <a-entity id="sky"
+                 geometry="primitive: sphere; radius: 65;"
+                 material="shader: skyGradient; colorTop: #1F1E36; colorBottom: #47c9ff; side: back"></a-entity>
+       <a-entity ground='url: https://cdn.aframe.io/link-traversal/models/groundMountains.json'></a-entity>
+       <a-entity light="type: point; color: #f4f4f4; intensity: 0.4; distance: 0" position="0 2 0"></a-entity>
+       <a-entity position="0 1.8 4" camera look-controls wasd-controls>
+         <a-entity mixin="cursor">
+           <a-animation id="fuse-animation" begin="fusing" easing="ease-in" attribute="scale"
+           fill="backwards" from="1 1 1" to="0.1 0.1 0.1" dur="1500"></a-animation>
+         </a-entity>
+       </a-entity>
+    </a-scene>
+  </body>
+</html>

@@ -12,11 +12,16 @@ var AEntity = require('../a-entity');
 var ANode = require('../a-node');
 var initPostMessageAPI = require('./postMessage');
 
+var activeVRDisplay = utils.getUrlParameter('activeVRDisplay');
 var bind = utils.bind;
 var isIOS = utils.device.isIOS();
 var isMobile = utils.device.isMobile();
 var registerElement = re.registerElement;
 var warn = utils.debug('core:a-scene:warn');
+
+// window.addEventListener('onvrdisplayactivate', function() {
+//   debugger;
+// });
 
 /**
  * Scene element, holds all entities.
@@ -182,7 +187,7 @@ module.exports = registerElement('a-scene', {
         function enterVRSuccess () {
           self.addState('vr-mode');
           self.emit('enter-vr', event);
-
+          self.emit('onvrdisplayactivate', { display: self.vrDisplay });
           // Lock to landscape orientation on mobile.
           if (self.isMobile && screen.orientation && screen.orientation.lock) {
             screen.orientation.lock('landscape');
@@ -341,6 +346,7 @@ module.exports = registerElement('a-scene', {
     setupRenderer: {
       value: function () {
         var canvas = this.canvas;
+        var self = this;
         // Set at startup. To enable/disable antialias
         // at runttime we would have to recreate the whole context
         var antialias = this.getAttribute('antialias') === 'true';
@@ -351,7 +357,12 @@ module.exports = registerElement('a-scene', {
         });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.sortObjects = false;
-        this.effect = new THREE.VREffect(renderer);
+        this.effect = new THREE.VREffect(renderer, activeVRDisplay, gotVRDisplay);
+        function gotVRDisplay (vrDisplay) {
+          self.emit('onvrdisplayconnect', { display: vrDisplay, reason: 'mounted' });
+          self.vrDisplay = vrDisplay;
+          if (activeVRDisplay) { self.enterVR(); }
+        }
       },
       writable: window.debug
     },

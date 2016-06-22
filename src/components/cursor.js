@@ -12,9 +12,9 @@ var EVENTS = {
 };
 
 var STATES = {
-  FUSING: 'cursor-fusing',
-  HOVERING: 'cursor-hovering',
-  HOVERED: 'cursor-hovered'
+  FUSING: 'fusing',
+  HOVERING: 'hovering',
+  HOVERED: 'hovered'
 };
 
 /**
