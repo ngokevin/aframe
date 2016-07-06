@@ -56672,11 +56672,11 @@ var registerComponent = _dereq_('../core/component').registerComponent;
 var utils = _dereq_('../utils/');
 
 var EVENTS = {
-  CLICK: 'cursor-click',
-  MOUSEENTER: 'cursor-mouseenter',
-  MOUSEDOWN: 'cursor-mousedown',
-  MOUSELEAVE: 'cursor-mouseleave',
-  MOUSEUP: 'cursor-mouseup'
+  CLICK: 'click',
+  MOUSEENTER: 'mouseenter',
+  MOUSEDOWN: 'mousedown',
+  MOUSELEAVE: 'mouseleave',
+  MOUSEUP: 'mouseup'
 };
 
 var STATES = {
@@ -59557,17 +59557,20 @@ var proto = Object.create(ANode.prototype, {
     }
   },
 
+  /**
+   * Apply mixin to component.
+   */
   applyMixin: {
-    value: function (attr) {
+    value: function (attrName) {
       var attrValue;
-      if (!attr) {
+      if (!attrName) {
         this.updateComponents();
         return;
       }
-      attrValue = this.getAttribute(attr);
-      // Make absence of attribute for getAttribute return undefined rather than null
+      attrValue = this.getAttribute(attrName);
+      // Make absence of value from getAttribute return undefined rather than null.
       attrValue = attrValue === null ? undefined : attrValue;
-      this.updateComponent(attr, attrValue);
+      this.updateComponent(attrName, attrValue);
     }
   },
 
@@ -59820,8 +59823,8 @@ var proto = Object.create(ANode.prototype, {
   },
 
   /**
-   * Updates all the entity's components. Given by defaults, mixins and attributes
-   * Default components update before the rest.
+   * Update all the entity's components. Given by defaults, mixins and defined attributes.
+   * Update default components before the rest.
    */
   updateComponents: {
     value: function () {
@@ -59829,30 +59832,38 @@ var proto = Object.create(ANode.prototype, {
       var self = this;
       var i;
       if (!this.hasLoaded) { return; }
-      // Components defined on the entity element
+
+      // Gather entity-defined components.
       var attributes = this.attributes;
       for (i = 0; i < attributes.length; ++i) {
         addComponent(attributes[i].name);
       }
-      // Components defined as mixins
+
+      // Gather mixin-defined components.
       getMixedInComponents(this).forEach(addComponent);
-      // Updates default components first
+
+      // Set default components.
       Object.keys(this.defaultComponents).forEach(updateComponent);
-      // Updates the rest of the components
+
+      // Set rest of components.
       Object.keys(elComponents).forEach(updateComponent);
 
-      // add component to the list
+      /**
+       * Add component to the list.
+       */
       function addComponent (key) {
         var name = key.split(MULTIPLE_COMPONENT_DELIMITER)[0];
         if (!components[name]) { return; }
         elComponents[key] = true;
       }
-      // updates a component with a given name
+
+      /**
+       * Update component with given name.
+       */
       function updateComponent (name) {
         var attrValue = self.getAttribute(name);
         delete elComponents[name];
-        // turn null into undefined because getAttribute
-        // returns null in the absence of an attribute
+        // Make absence of value from getAttribute return undefined rather than null.
         attrValue = attrValue === null ? undefined : attrValue;
         self.updateComponent(name, attrValue);
       }
@@ -60078,11 +60089,9 @@ var proto = Object.create(ANode.prototype, {
    */
   getAttribute: {
     value: function (attr) {
+      // If cached value exists, return partial component data.
       var component = this.components[attr];
-      // If there's a cached value we just return it
-      if (component && component.attrValue !== undefined) {
-        return component.attrValue;
-      }
+      if (component && component.attrValue !== undefined) { return component.attrValue; }
       return HTMLElement.prototype.getAttribute.call(this, attr);
     },
     writable: window.debug
@@ -60099,6 +60108,7 @@ var proto = Object.create(ANode.prototype, {
    */
   getComputedAttribute: {
     value: function (attr) {
+      // If component, return component data.
       var component = this.components[attr];
       if (component) { return component.getData(); }
       return HTMLElement.prototype.getAttribute.call(this, attr);
@@ -60196,72 +60206,87 @@ var registerElement = _dereq_('./a-register-element').registerElement;
 var components = _dereq_('./component').components;
 
 /**
- * @member {object} componentAttrCache - Cache of pre parsed component attributes
+ * @member {object} componentAttrCache - Cache of pre-parsed values. An object where the keys
+ *         are component names and the values are already parsed by the component.
  */
 module.exports = registerElement('a-mixin', {
-  prototype: Object.create(
-    ANode.prototype,
-    {
-      createdCallback: {
-        value: function () {
-          this.componentAttrCache = {};
+  prototype: Object.create(ANode.prototype, {
+    createdCallback: {
+      value: function () {
+        this.componentAttrCache = {};
+        this.id = this.getAttribute('id');
+      }
+    },
+
+    attributeChangedCallback: {
+      value: function (attr, oldVal, newVal) {
+        this.cacheAttribute(attr, newVal);
+      }
+    },
+
+    attachedCallback: {
+      value: function () {
+        this.sceneEl = this.closest('a-scene');
+
+        this.cacheAttributes();
+        this.load();
+        this.refreshEntities();
+      }
+    },
+
+    setAttribute: {
+      value: function (attr, value) {
+        this.cacheAttribute(attr, value);
+        HTMLElement.prototype.setAttribute.call(this, attr, value);
+      }
+    },
+
+    cacheAttribute: {
+      value: function (attr, value) {
+        var component = components[attr];
+        if (!component) { return; }
+        value = value === undefined ? HTMLElement.prototype.getAttribute.call(this, attr) : value;
+        this.componentAttrCache[attr] = component.parseAttrValueForCache(value);
+      }
+    },
+
+    getAttribute: {
+      value: function (attr) {
+        return this.componentAttrCache[attr] || HTMLElement.prototype.getAttribute.call(this, attr);
+      }
+    },
+
+    /**
+     * Update cache of parsed component attributes.
+     */
+    cacheAttributes: {
+      value: function () {
+        var attributes = this.attributes;
+        var attrName;
+        var i;
+        for (i = 0; i < attributes.length; i++) {
+          attrName = attributes[i].name;
+          this.cacheAttribute(attrName);
         }
-      },
+      }
+    },
 
-      attributeChangedCallback: {
-        value: function (attr, oldVal, newVal) {
-          this.cacheAttribute(attr, newVal);
-        }
-      },
-
-      attachedCallback: {
-        value: function () {
-          this.cacheAttributes();
-          this.load();
-        },
-        writable: window.debug
-      },
-
-      setAttribute: {
-        value: function (attr, value) {
-          this.cacheAttribute(attr, value);
-          HTMLElement.prototype.setAttribute.call(this, attr, value);
-        },
-        writable: window.debug
-      },
-
-      cacheAttribute: {
-        value: function (attr, value) {
-          var component = components[attr];
-          if (!component) { return; }
-          value = value === undefined ? HTMLElement.prototype.getAttribute.call(this, attr) : value;
-          this.componentAttrCache[attr] = component.parseAttrValueForCache(value);
-        }
-      },
-
-      getAttribute: {
-        value: function (attr) {
-          return this.componentAttrCache[attr] || HTMLElement.prototype.getAttribute.call(this, attr);
-        },
-        writable: window.debug
-      },
-
-      /**
-       * Update cache of parsed component attributes
-       */
-      cacheAttributes: {
-        value: function () {
-          var attributes = this.attributes;
-          var attrName;
-          var i;
-          for (i = 0; i < attributes.length; ++i) {
-            attrName = attributes[i].name;
-            this.cacheAttribute(attrName);
-          }
+    /**
+     * For entities that already have been loaded by the time the mixin was attached, tell
+     * those entities to register the mixin and refresh their component data.
+     */
+    refreshEntities: {
+      value: function () {
+        var entities = this.sceneEl.querySelectorAll('[mixin~=' + this.id + ']');
+        for (var i = 0; i < entities.length; i++) {
+          var entity = entities[i];
+          if (!entity.hasLoaded) { continue; }
+          entity.registerMixin(this.id);
+          entity.updateComponents();
         }
       }
     }
-  )
+  })
 });
 
 },{"./a-node":49,"./a-register-element":50,"./component":51}],49:[function(_dereq_,module,exports){
@@ -61391,8 +61416,7 @@ module.exports = registerElement('a-scene', {
       value: function (name) {
         var system;
         if (this.systems[name]) { return; }
-        system = this.systems[name] = new systems[name]();
-        system.sceneEl = this;
+        system = this.systems[name] = new systems[name](this);
         system.init();
       }
     },
@@ -61465,6 +61489,46 @@ module.exports = registerElement('a-scene', {
             throw new Error('Failed to exit VR mode (`exitPresent`).');
           }
         }
+      }
+    },
+
+    /**
+     * Wraps Entity.getAttribute to take into account for systems.
+     * If system exists, then return system data rather than possible component data.
+     */
+    getAttribute: {
+      value: function (attr) {
+        var system = this.systems[attr];
+        if (system) { return system.data; }
+        return AEntity.prototype.getAttribute.call(this, attr);
+      }
+    },
+
+    /**
+     * Wraps Entity.getComputedAttribute to take into account for systems.
+     * If system exists, then return system data rather than possible component data.
+     */
+    getComputedAttribute: {
+      value: function (attr) {
+        var system = this.systems[attr];
+        if (system) { return system.data; }
+        return AEntity.prototype.getComputedAttribute.call(this, attr);
+      }
+    },
+
+    /**
+     * Wraps Entity.setAttribute to take into account for systems.
+     * If system exists, then skip component initialization checks and do a normal
+     * setAttribute.
+     */
+    setAttribute: {
+      value: function (attr, value, componentPropValue) {
+        var system = this.systems[attr];
+        if (system) {
+          ANode.prototype.setAttribute.call(this, attr, value);
+          return;
+        }
+        AEntity.prototype.setAttribute.call(this, attr, value, componentPropValue);
       }
     },
 
@@ -61871,10 +61935,7 @@ module.exports.parseProperties = function (propData, schema, getPartialData, sil
   propNames.forEach(function parse (propName) {
     var propDefinition = schema[propName];
     var propValue = propData[propName];
-
     if (!(schema[propName])) { return; }
-
-    propValue = propValue === undefined ? propDefinition.default : propValue;
     propData[propName] = parseProperty(propValue, propDefinition);
   });
 
@@ -61885,6 +61946,7 @@ module.exports.parseProperties = function (propData, schema, getPartialData, sil
  * Deserialize a single property.
  */
 function parseProperty (value, propDefinition) {
+  value = (value === undefined || value === null) ? propDefinition.default : value;
   if (typeof value !== 'string') { return value; }
   if (typeof value === 'undefined') { return value; }
   return propDefinition.parse(value);
@@ -62080,25 +62142,57 @@ module.exports.registerShader = function (name, definition) {
 };
 
 },{"../lib/three":95,"./schema":58}],60:[function(_dereq_,module,exports){
+/* global HTMLElement */
 var components = _dereq_('./component');
-var systems = module.exports.systems = {};  // Keep track of registered components.
+var schema = _dereq_('./schema');
+var utils = _dereq_('../utils/');
+
+var parseProperties = schema.parseProperties;
+var parseProperty = schema.parseProperty;
+var processSchema = schema.process;
+var isSingleProp = schema.isSingleProperty;
+var styleParser = utils.styleParser;
+
+var systems = module.exports.systems = {};  // Keep track of registered systems.
 
 /**
  * System class definition.
  *
- * Systems provide global scope and services to a group of instantiated components of the.
- * same class. For example, a physics component that creates a physics world that oversees
+ * Systems provide global scope and services to a group of instantiated components of the
+ * same class. They can also help abstract logic away from components such that components
+ * only have to worry about data.
+ * For example, a physics component that creates a physics world that oversees
  * all entities with a physics or rigid body component.
  *
  * @member {string} name - Name that system is registered under.
  * @member {Element} sceneEl - Handle to the scene element where system applies to.
  */
-var System = module.exports.System = function () {
+var System = module.exports.System = function (sceneEl) {
   var component = components && components.components[this.name];
+  var schema = this.schema;
+  var rawData;
+
+  // Set reference to scene.
+  this.sceneEl = sceneEl;
+
+  // Set reference to matching component (if exists).
   if (component) { component.Component.prototype.system = this; }
+
+  // Process system configuration.
+  if (!Object.keys(schema).length) { return; }
+  rawData = HTMLElement.prototype.getAttribute.call(sceneEl, this.name);
+  if (isSingleProp(schema)) {
+    this.data = parseProperty(rawData, schema);
+    return;
+  }
+  this.data = parseProperties(styleParser.parse(rawData) || {}, schema);
 };
 
 System.prototype = {
+  /**
+   * Schema to configure system.
+   */
+  schema: {},
 
   /**
    * Init handler. Called during scene initialization and is only run once.
@@ -62153,17 +62247,18 @@ module.exports.registerSystem = function (name, definition) {
                     'Check that you are not loading two versions of the same system ' +
                     'or two different systems of the same name.');
   }
-  NewSystem = function () { System.call(this); };
+  NewSystem = function (sceneEl) { System.call(this, sceneEl); };
   NewSystem.prototype = Object.create(System.prototype, proto);
   NewSystem.prototype.name = name;
   NewSystem.prototype.constructor = NewSystem;
+  NewSystem.prototype.schema = utils.extend(processSchema(NewSystem.prototype.schema));
   systems[name] = NewSystem;
 
   // Initialize systems for existing scenes
   for (i = 0; i < scenes.length; i++) { scenes[i].initSystem(name); }
 };
 
-},{"./component":51}],61:[function(_dereq_,module,exports){
+},{"../utils/":109,"./component":51,"./schema":58}],61:[function(_dereq_,module,exports){
 _dereq_('./pivot');
 
 },{"./pivot":62}],62:[function(_dereq_,module,exports){
