@@ -85,17 +85,20 @@ var proto = Object.create(ANode.prototype, {
     }
   },
 
+  /**
+   * Apply mixin to component.
+   */
   applyMixin: {
-    value: function (attr) {
+    value: function (attrName) {
       var attrValue;
-      if (!attr) {
+      if (!attrName) {
         this.updateComponents();
         return;
       }
-      attrValue = this.getAttribute(attr);
-      // Make absence of attribute for getAttribute return undefined rather than null
+      attrValue = this.getAttribute(attrName);
+      // Make absence of value from getAttribute return undefined rather than null.
       attrValue = attrValue === null ? undefined : attrValue;
-      this.updateComponent(attr, attrValue);
+      this.updateComponent(attrName, attrValue);
     }
   },
 
@@ -348,8 +351,8 @@ var proto = Object.create(ANode.prototype, {
   },
 
   /**
-   * Updates all the entity's components. Given by defaults, mixins and attributes
-   * Default components update before the rest.
+   * Update all the entity's components. Given by defaults, mixins and defined attributes.
+   * Update default components before the rest.
    */
   updateComponents: {
     value: function () {
@@ -357,30 +360,38 @@ var proto = Object.create(ANode.prototype, {
       var self = this;
       var i;
       if (!this.hasLoaded) { return; }
-      // Components defined on the entity element
+
+      // Gather entity-defined components.
       var attributes = this.attributes;
       for (i = 0; i < attributes.length; ++i) {
         addComponent(attributes[i].name);
       }
-      // Components defined as mixins
+
+      // Gather mixin-defined components.
       getMixedInComponents(this).forEach(addComponent);
-      // Updates default components first
+
+      // Set default components.
       Object.keys(this.defaultComponents).forEach(updateComponent);
-      // Updates the rest of the components
+
+      // Set rest of components.
       Object.keys(elComponents).forEach(updateComponent);
 
-      // add component to the list
+      /**
+       * Add component to the list.
+       */
       function addComponent (key) {
         var name = key.split(MULTIPLE_COMPONENT_DELIMITER)[0];
         if (!components[name]) { return; }
         elComponents[key] = true;
       }
-      // updates a component with a given name
+
+      /**
+       * Update component with given name.
+       */
       function updateComponent (name) {
         var attrValue = self.getAttribute(name);
         delete elComponents[name];
-        // turn null into undefined because getAttribute
-        // returns null in the absence of an attribute
+        // Make absence of value from getAttribute return undefined rather than null.
         attrValue = attrValue === null ? undefined : attrValue;
         self.updateComponent(name, attrValue);
       }
