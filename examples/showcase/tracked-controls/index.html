@@ -26,34 +26,36 @@
       <a-entity hand-controls="right" aabb-collider="objects: .cube;" grab></a-entity>
 
       <!-- A-Frame cubes -->
-      <a-entity class="cube" mixin="cube" position="0.30 1.65 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="0 1.95 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="-0.30 1.65 0"></a-entity>
+      <a-entity position="0 0 -1">
+        <a-entity class="cube" mixin="cube" position="0.30 1.65 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="0 1.95 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="-0.30 1.65 0"></a-entity>
 
-      <a-entity class="cube" mixin="cube" position="0.60 1.35 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="0.60 1.05 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="0.60 0.75 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="0.60 0.45 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="0.60 0.15 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="0.60 1.35 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="0.60 1.05 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="0.60 0.75 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="0.60 0.45 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="0.60 0.15 0"></a-entity>
 
-      <a-entity class="cube" mixin="cube" position="0.30 0.75 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="0 0.75 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="-0.30 0.75 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="0.30 0.75 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="0 0.75 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="-0.30 0.75 0"></a-entity>
 
-      <a-entity class="cube" mixin="cube" position="-0.60 1.35 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="-0.60 1.05 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="-0.60 0.75 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="-0.60 0.45 0"></a-entity>
-      <a-entity class="cube" mixin="cube" position="-0.60 0.15 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="-0.60 1.35 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="-0.60 1.05 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="-0.60 0.75 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="-0.60 0.45 0"></a-entity>
+        <a-entity class="cube" mixin="cube" position="-0.60 0.15 0"></a-entity>
 
-      <!-- Environment -->
-      <a-entity id="sky"
-                geometry="primitive: sphere; radius: 65;"
-                material="shader: skyGradient; colorTop: #353449; colorBottom: #BC483E; side: back"></a-entity>
-       <a-entity ground></a-entity>
-       <a-entity light="type: point; color: #f4f4f4; intensity: 0.2; distance: 0" position="8 10 18"></a-entity>
-       <a-entity light="type: point; color: #f4f4f4; intensity: 0.6; distance: 0" position="-8 10 -18"></a-entity>
-       <a-entity light="type: ambient; color: #f4f4f4; intensity: 0.4;" position="-8 10 -18"></a-entity>
+        <!-- Environment -->
+        <a-entity id="sky"
+                  geometry="primitive: sphere; radius: 65;"
+                  material="shader: skyGradient; colorTop: #353449; colorBottom: #BC483E; side: back"></a-entity>
+         <a-entity ground></a-entity>
+         <a-entity light="type: point; color: #f4f4f4; intensity: 0.2; distance: 0" position="8 10 18"></a-entity>
+         <a-entity light="type: point; color: #f4f4f4; intensity: 0.6; distance: 0" position="-8 10 -18"></a-entity>
+         <a-entity light="type: ambient; color: #f4f4f4; intensity: 0.4;" position="-8 10 -18"></a-entity>
+      </a-entity>
     </a-scene>
   </body>
 </html>
