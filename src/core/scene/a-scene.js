@@ -17,6 +17,16 @@ var registerElement = re.registerElement;
 var isIOS = utils.isIOS();
 var isMobile = utils.isMobile();
 
+// Single requestAnimationFrame to share among multiple scenes for their render loops.
+var RENDER_LOOPS = [];
+function renderScenes (time) {
+  RENDER_LOOPS.forEach(function callRender (renderFn) {
+    renderFn(time);
+  });
+  window.requestAnimationFrame(renderScenes);
+}
+renderScenes();
+
 /**
  * Scene element, holds all entities.
  *
@@ -41,6 +51,7 @@ module.exports = registerElement('a-scene', {
         'canvas': '',
         'inspector': '',
         'keyboard-shortcuts': '',
+        'renderer': '',
         'vr-mode-ui': ''
       }
     },
@@ -52,6 +63,7 @@ module.exports = registerElement('a-scene', {
         this.isScene = true;
         this.object3D = new THREE.Scene();
         this.render = bind(this.render, this);
+        this.resize = bind(this.resize, this);
         this.systems = {};
         this.time = 0;
 
@@ -65,10 +77,7 @@ module.exports = registerElement('a-scene', {
         this.hasLoaded = false;
         this.isPlaying = false;
         this.originalHTML = this.innerHTML;
-        this.addEventListener('render-target-loaded', function () {
-          this.setupRenderer();
-          this.resize();
-        });
+        this.addEventListener('renderer-loaded', this.resize);
         this.addFullScreenStyles();
         initPostMessageAPI(this);
       },
@@ -95,13 +104,12 @@ module.exports = registerElement('a-scene', {
 
     attachedCallback: {
       value: function () {
-        var resize = bind(this.resize, this);
         initMetaTags(this);
         initWakelock(this);
         this.initSystems();
 
-        window.addEventListener('load', resize);
-        window.addEventListener('resize', resize);
+        window.addEventListener('load', this.resize);
+        window.addEventListener('resize', this.resize);
         this.play();
       },
       writable: window.debug
@@ -283,25 +291,7 @@ module.exports = registerElement('a-scene', {
         // Notify renderer of size change.
         this.renderer.setSize(size.width, size.height);
       },
-      writable: window.debug
-    },
-
-    setupRenderer: {
-      value: function () {
-        var canvas = this.canvas;
-        // Set at startup. To enable/disable antialias
-        // at runttime we would have to recreate the whole context
-        var antialias = this.getAttribute('antialias') === 'true';
-        var renderer = this.renderer = new THREE.WebGLRenderer({
-          canvas: canvas,
-          antialias: antialias || window.hasNativeWebVRImplementation,
-          alpha: true
-        });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.sortObjects = false;
-        this.effect = new THREE.VREffect(renderer);
-      },
-      writable: window.debug
+      writable: true
     },
 
     /**
@@ -327,19 +317,13 @@ module.exports = registerElement('a-scene', {
           this.addEventListener('camera-set-active', function () { startRender(this); });
 
           function startRender (sceneEl) {
-            if (sceneEl.renderStarted) { return; }
-
-            sceneEl.resize();
+            if (sceneEl.renderStarted || !sceneEl.renderer) { return; }
 
             // Kick off render loop.
-            if (sceneEl.renderer) {
-              if (window.performance) {
-                window.performance.mark('render-started');
-              }
-              sceneEl.render(0);
-              sceneEl.renderStarted = true;
-              sceneEl.emit('renderstart');
-            }
+            if (window.performance) { window.performance.mark('render-started'); }
+            sceneEl.renderStarted = true;
+            RENDER_LOOPS.push(sceneEl.render);
+            sceneEl.emit('renderstart');
           }
         });
 
@@ -408,7 +392,6 @@ module.exports = registerElement('a-scene', {
         this.effect.render(this.object3D, this.camera);
 
         this.time = time;
-        this.animationFrameID = window.requestAnimationFrame(this.render);
       },
       writable: true
     }

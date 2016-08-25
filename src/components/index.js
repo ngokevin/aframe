@@ -25,5 +25,6 @@ require('./scene/embedded');
 require('./scene/inspector');
 require('./scene/fog');
 require('./scene/keyboard-shortcuts');
+require('./scene/renderer');
 require('./scene/stats');
 require('./scene/vr-mode-ui');
