@@ -131,12 +131,12 @@ module.exports = registerElement('a-scene', {
     },
 
     /**
-     * Shuts down scene on detach.
+     * Remove from global render loops.
      */
     detachedCallback: {
       value: function () {
-        window.cancelAnimationFrame(this.animationFrameID);
-        this.animationFrameID = null;
+        var index = RENDER_LOOPS.indexOf(this.render);
+        RENDER_LOOPS.splice(index, 1);
       }
     },
 

@@ -73,7 +73,7 @@ module.exports.System = registerSystem('camera', {
     var i;
     var newCamera;
     var previousCamera = this.activeCameraEl;
-    var sceneEl = this.sceneEl;
+    var sceneEl = newCameraEl.sceneEl;
 
     // Same camera.
     newCamera = newCameraEl.getObject3D('camera');
