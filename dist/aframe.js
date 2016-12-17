@@ -56618,6 +56618,7 @@ function iOSWakeLock() {
 
 function getWakeLock() {
   var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  console.log(userAgent);
   if (userAgent.match(/iPhone/i) || userAgent.match(/iPod/i)) {
     return iOSWakeLock;
   } else {
@@ -56814,21 +56815,22 @@ module.exports = WebVRPolyfill;
 },{}],20:[function(_dereq_,module,exports){
 module.exports={
   "name": "aframe",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Building blocks for the VR Web",
   "homepage": "https://aframe.io/",
   "main": "dist/aframe.js",
   "scripts": {
     "browserify": "browserify src/index.js -s 'AFRAME' -p browserify-derequire",
-    "build": "mkdirp build/ && npm run browserify -- --debug -o dist/aframe.min.js",
+    "build": "mkdirp build/ && npm run browserify -- --debug -t [envify --INSPECTOR_VERSION dev] -o dist/aframe.min.js",
     "codecov": "codecov",
-    "dev": "npm run build && node ./scripts/budo",
+    "dev": "npm run build && cross-env INSPECTOR_VERSION=dev node ./scripts/budo -t envify",
     "dist": "npm run dist:min && npm run dist:max",
-    "dist:max": "npm run browserify -s -- --debug | exorcist dist/aframe.js.map > dist/aframe.js",
-    "dist:min": "npm run browserify -s -- --debug -p [minifyify --map aframe.min.js.map --output dist/aframe.min.js.map] -o dist/aframe.min.js",
+    "dist:max": "npm run browserify -s -- --debug -t [envify --INSPECTOR_VERSION dev] | exorcist dist/aframe.js.map > dist/aframe.js",
+    "dist:min": "npm run browserify -s -- --debug -t [envify --INSPECTOR_VERSION dev] -p [minifyify --map aframe.min.js.map --output dist/aframe.min.js.map] -o dist/aframe.min.js",
     "dist:release": "npm run dist:release:min && npm run dist:release:max",
     "dist:release:max": "npm run browserify -s -- --debug | exorcist dist/aframe-v0.3.0.js.map > dist/aframe-v0.3.0.js",
     "dist:release:min": "npm run browserify -s -- --debug -p [minifyify --map aframe-v0.3.0.min.js.map --output dist/aframe-v0.3.0.min.js.map] -o dist/aframe-v0.3.0.min.js",
+    "docs": "markserv --dir docs --port 9001",
     "ghpages": "ghpages -p gh-pages/",
     "lint": "semistandard -v | snazzy",
     "precommit": "npm run lint",
@@ -56853,7 +56855,7 @@ module.exports={
     "present": "0.0.6",
     "promise-polyfill": "^3.1.0",
     "style-attr": "^1.0.2",
-    "three": "^0.76.1",
+    "three": "^0.81.2",
     "tween.js": "^15.0.0",
     "webvr-polyfill": "0.9.15"
   },
@@ -56861,42 +56863,45 @@ module.exports={
     "browserify": "^13.1.0",
     "browserify-derequire": "^0.9.4",
     "browserify-istanbul": "^2.0.0",
-    "budo": "^8.1.0",
+    "budo": "^9.2.0",
     "chai": "^3.5.0",
-    "chai-shallow-deep-equal": "^1.3.0",
+    "chai-shallow-deep-equal": "^1.4.0",
     "codecov": "^1.0.1",
+    "envify": "^3.4.1",
     "exorcist": "^0.4.0",
-    "ghpages": "^0.0.8",
-    "husky": "^0.10.1",
-    "istanbul": "^0.4.4",
-    "karma": "^1.2.0",
+    "ghpages": "0.0.8",
+    "husky": "^0.11.7",
+    "istanbul": "^0.4.5",
+    "karma": "^1.3.0",
     "karma-browserify": "^5.1.0",
     "karma-chai-shallow-deep-equal": "0.0.4",
-    "karma-chrome-launcher": "^1.0.1",
+    "karma-chrome-launcher": "^2.0.0",
     "karma-coverage": "^1.1.1",
     "karma-env-preprocessor": "^0.1.1",
     "karma-firefox-launcher": "^1.0.0",
     "karma-mocha": "^1.1.1",
     "karma-mocha-reporter": "^2.1.0",
-    "karma-sinon-chai": "^1.2.3",
+    "karma-sinon-chai": "^1.2.4",
     "lolex": "^1.5.1",
+    "markserv": "0.0.20",
     "minifyify": "^7.3.3",
-    "mkdirp": "0.5.1",
+    "mkdirp": "^0.5.1",
     "mocha": "^3.0.2",
-    "mozilla-download": "^1.0.5",
+    "mozilla-download": "^1.1.1",
     "open": "0.0.5",
     "replace": "^0.3.0",
-    "rimraf": "2.5.0",
-    "semistandard": "^7.0.2",
+    "rimraf": "^2.5.4",
+    "semistandard": "^9.0.0",
     "sinon": "^1.17.5",
     "sinon-chai": "^2.8.0",
-    "snazzy": "^3.0.0",
+    "snazzy": "^5.0.0",
     "uglifyjs": "^2.4.10"
   },
   "link": true,
   "browserify": {
     "transform": [
-      "browserify-css"
+      "browserify-css",
+      "envify"
     ]
   },
   "semistandard": {
@@ -56925,8 +56930,8 @@ module.exports={
     "minify": true
   },
   "engines": {
-    "node": ">= 0.12.7",
-    "npm": "^2.12.1"
+    "node": ">= 4.6.0",
+    "npm": "^2.15.9"
   }
 }
 
@@ -56939,7 +56944,7 @@ var THREE = _dereq_('../lib/three');
  * Loads a model with skeletal animation blending.
  */
 module.exports.Component = registerComponent('blend-character-model', {
-  schema: {type: 'src'},
+  schema: {type: 'asset'},
 
   init: function () {
     this.model = null;
@@ -56971,13 +56976,13 @@ module.exports.Component = registerComponent('blend-character-model', {
   }
 });
 
-},{"../core/component":60,"../lib/three":104}],22:[function(_dereq_,module,exports){
+},{"../core/component":61,"../lib/three":104}],22:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 var THREE = _dereq_('../lib/three');
 var utils = _dereq_('../utils/');
 var bind = utils.bind;
 
-var checkHeadsetConnected = utils.checkHeadsetConnected;
+var checkHasPositionalTracking = utils.device.checkHasPositionalTracking;
 
 /**
  * Camera component.
@@ -57084,7 +57089,7 @@ module.exports.Component = registerComponent('camera', {
     var userHeightOffset = this.data.userHeight;
 
     oldOffset = oldOffset || 0;
-    currentPosition = el.getComputedAttribute('position') || {x: 0, y: 0, z: 0};
+    currentPosition = el.getAttribute('position') || {x: 0, y: 0, z: 0};
     el.setAttribute('position', {
       x: currentPosition.x,
       y: currentPosition.y - oldOffset + userHeightOffset,
@@ -57095,20 +57100,18 @@ module.exports.Component = registerComponent('camera', {
   /**
    * Remove the height offset (called when entering VR) since WebVR API gives absolute
    * position.
-   * Does not apply for mobile.
    */
   removeHeightOffset: function () {
     var currentPosition;
     var el = this.el;
-    var headsetConnected;
-    var sceneEl = el.sceneEl;
+    var hasPositionalTracking;
     var userHeightOffset = this.data.userHeight;
 
-    // If there's not a headset connected we keep the offset.
+    // Remove the offset if there is positional tracking when entering VR.
     // Necessary for fullscreen mode with no headset.
-    // Checking this.headsetConnected to make the value injectable for unit tests.
-    headsetConnected = this.headsetConnected || checkHeadsetConnected();
-    if (sceneEl.isMobile || !userHeightOffset || !headsetConnected) { return; }
+    // Checking this.hasPositionalTracking to make the value injectable for unit tests.
+    hasPositionalTracking = this.hasPositionalTracking || checkHasPositionalTracking();
+    if (!userHeightOffset || !hasPositionalTracking) { return; }
 
     currentPosition = el.getAttribute('position') || {x: 0, y: 0, z: 0};
     el.setAttribute('position', {
@@ -57123,9 +57126,9 @@ module.exports.Component = registerComponent('camera', {
    */
   saveCameraPose: function () {
     var el = this.el;
-    var headsetConnected = this.headsetConnected || checkHeadsetConnected();
+    var hasPositionalTracking = this.hasPositionalTracking || checkHasPositionalTracking();
 
-    if (this.savedPose || !headsetConnected) { return; }
+    if (this.savedPose || !hasPositionalTracking) { return; }
 
     this.savedPose = {
       position: el.getAttribute('position'),
@@ -57139,9 +57142,9 @@ module.exports.Component = registerComponent('camera', {
   restoreCameraPose: function () {
     var el = this.el;
     var savedPose = this.savedPose;
-    var headsetConnected = this.headsetConnected || checkHeadsetConnected();
+    var hasPositionalTracking = this.hasPositionalTracking || checkHasPositionalTracking();
 
-    if (!savedPose || !headsetConnected) { return; }
+    if (!savedPose || !hasPositionalTracking) { return; }
 
     // Reset camera orientation.
     el.setAttribute('position', savedPose.position);
@@ -57150,14 +57153,12 @@ module.exports.Component = registerComponent('camera', {
   }
 });
 
-},{"../core/component":60,"../lib/three":104,"../utils/":122}],23:[function(_dereq_,module,exports){
+},{"../core/component":61,"../lib/three":104,"../utils/":122}],23:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 var THREE = _dereq_('../lib/three');
 
 module.exports.Component = registerComponent('collada-model', {
-  schema: {
-    type: 'src'
-  },
+  schema: {type: 'asset'},
 
   init: function () {
     this.model = null;
@@ -57187,7 +57188,7 @@ module.exports.Component = registerComponent('collada-model', {
   }
 });
 
-},{"../core/component":60,"../lib/three":104}],24:[function(_dereq_,module,exports){
+},{"../core/component":61,"../lib/three":104}],24:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 var utils = _dereq_('../utils/');
 var bind = utils.bind;
@@ -57213,6 +57214,8 @@ var STATES = {
  *
  * @member {object} fuseTimeout - Timeout to trigger fuse-click.
  * @member {Element} mouseDownEl - Entity that was last mousedowned during current click.
+ * @member {object} intersection - Attributes of the current intersection event, including
+ *         3D- and 2D-space coordinates. See: http://threejs.org/docs/api/core/Raycaster.html
  * @member {Element} intersectedEl - Currently-intersected entity. Used to keep track to
  *         emit events when unintersecting.
  */
@@ -57220,7 +57223,7 @@ module.exports.Component = registerComponent('cursor', {
   dependencies: ['raycaster'],
 
   schema: {
-    fuse: {default: utils.isMobile()},
+    fuse: {default: utils.device.isMobile()},
     fuseTimeout: {default: 1500, min: 0}
   },
 
@@ -57229,6 +57232,7 @@ module.exports.Component = registerComponent('cursor', {
     var canvas = cursorEl.sceneEl.canvas;
     this.fuseTimeout = undefined;
     this.mouseDownEl = null;
+    this.intersection = null;
     this.intersectedEl = null;
 
     // Wait for canvas to load.
@@ -57260,7 +57264,7 @@ module.exports.Component = registerComponent('cursor', {
    * - Currently-intersected entity is the same as the one when mousedown was triggered,
    *   in case user mousedowned one entity, dragged to another, and mouseupped.
    */
-  onMouseUp: function () {
+  onMouseUp: function (evt) {
     this.twoWayEmit(EVENTS.MOUSEUP);
     if (this.data.fuse || !this.intersectedEl ||
         this.mouseDownEl !== this.intersectedEl) { return; }
@@ -57274,10 +57278,29 @@ module.exports.Component = registerComponent('cursor', {
     var self = this;
     var cursorEl = this.el;
     var data = this.data;
-    var intersectedEl = evt.detail.els[0];  // Grab the closest.
+    var index;
+    var intersectedEl;
+    var intersection;
 
-    // Set intersected entity if not already intersecting.
-    if (this.intersectedEl === intersectedEl) { return; }
+    // Select closest object, excluding the cursor.
+    index = evt.detail.els[0] === cursorEl ? 1 : 0;
+    intersection = evt.detail.intersections[index];
+    intersectedEl = evt.detail.els[index];
+
+    // If cursor is the only intersected object, ignore the event.
+    if (!intersectedEl) { return; }
+
+    // Already intersecting this entity.
+    if (this.intersectedEl === intersectedEl) {
+      this.intersection = intersection;
+      return;
+    }
+
+    // Unset current intersection.
+    if (this.intersectedEl) { this.clearCurrentIntersection(); }
+
+    // Set new intersection.
+    this.intersection = intersection;
     this.intersectedEl = intersectedEl;
 
     // Hovering.
@@ -57301,16 +57324,26 @@ module.exports.Component = registerComponent('cursor', {
     var cursorEl = this.el;
     var intersectedEl = evt.detail.el;
 
-    // Not intersecting.
-    if (!intersectedEl || !this.intersectedEl) { return; }
+    // Ignore the cursor.
+    if (cursorEl === intersectedEl) { return; }
+
+    // Ignore if the event didn't occur on the current intersection.
+    if (intersectedEl !== this.intersectedEl) { return; }
+
+    this.clearCurrentIntersection();
+  },
+
+  clearCurrentIntersection: function () {
+    var cursorEl = this.el;
 
     // No longer hovering (or fusing).
-    intersectedEl.removeState(STATES.HOVERED);
+    this.intersectedEl.removeState(STATES.HOVERED);
     cursorEl.removeState(STATES.HOVERING);
     cursorEl.removeState(STATES.FUSING);
     this.twoWayEmit(EVENTS.MOUSELEAVE);
 
     // Unset intersected entity (after emitting the event).
+    this.intersection = null;
     this.intersectedEl = null;
 
     // Clear fuseTimeout.
@@ -57321,14 +57354,16 @@ module.exports.Component = registerComponent('cursor', {
    * Helper to emit on both the cursor and the intersected entity (if exists).
    */
   twoWayEmit: function (evtName) {
+    var el = this.el;
     var intersectedEl = this.intersectedEl;
-    this.el.emit(evtName, {intersectedEl: this.intersectedEl});
+    var intersection = this.intersection;
+    el.emit(evtName, {intersectedEl: intersectedEl, intersection: intersection});
     if (!intersectedEl) { return; }
-    intersectedEl.emit(evtName, {cursorEl: this.el});
+    intersectedEl.emit(evtName, {cursorEl: el, intersection: intersection});
   }
 });
 
-},{"../core/component":60,"../utils/":122}],25:[function(_dereq_,module,exports){
+},{"../core/component":61,"../utils/":122}],25:[function(_dereq_,module,exports){
 var debug = _dereq_('../utils/debug');
 var geometries = _dereq_('../core/geometry').geometries;
 var geometryNames = _dereq_('../core/geometry').geometryNames;
@@ -57400,7 +57435,7 @@ module.exports.Component = registerComponent('geometry', {
     toMesh = toEl.getObject3D('mesh');
     if (!toMesh) {
       toMesh = toEl.getOrCreateObject3D('mesh', THREE.Mesh);
-      toEl.setAttribute('material', el.getComputedAttribute('material'));
+      toEl.setAttribute('material', el.getAttribute('material'));
       return;
     }
 
@@ -57452,7 +57487,7 @@ module.exports.Component = registerComponent('geometry', {
   }
 });
 
-},{"../core/component":60,"../core/geometry":61,"../lib/three":104,"../utils/debug":119}],26:[function(_dereq_,module,exports){
+},{"../core/component":61,"../core/geometry":62,"../lib/three":104,"../utils/debug":118}],26:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 
 var LEFT_HAND_MODEL_URL = 'https://cdn.aframe.io/controllers/hands/leftHand.json';
@@ -57583,7 +57618,7 @@ module.exports.Component = registerComponent('hand-controls', {
   }
 });
 
-},{"../core/component":60}],27:[function(_dereq_,module,exports){
+},{"../core/component":61}],27:[function(_dereq_,module,exports){
 _dereq_('./blend-character-model');
 _dereq_('./camera');
 _dereq_('./collada-model');
@@ -57591,7 +57626,6 @@ _dereq_('./cursor');
 _dereq_('./geometry');
 _dereq_('./hand-controls');
 _dereq_('./light');
-_dereq_('./look-at');
 _dereq_('./look-controls');
 _dereq_('./material');
 _dereq_('./obj-model');
@@ -57611,10 +57645,12 @@ _dereq_('./scene/embedded');
 _dereq_('./scene/inspector');
 _dereq_('./scene/fog');
 _dereq_('./scene/keyboard-shortcuts');
+_dereq_('./scene/pool');
+_dereq_('./scene/screenshot');
 _dereq_('./scene/stats');
 _dereq_('./scene/vr-mode-ui');
 
-},{"./blend-character-model":21,"./camera":22,"./collada-model":23,"./cursor":24,"./geometry":25,"./hand-controls":26,"./light":28,"./look-at":29,"./look-controls":30,"./material":31,"./obj-model":32,"./position":33,"./raycaster":34,"./rotation":35,"./scale":36,"./scene/canvas":37,"./scene/debug":38,"./scene/embedded":39,"./scene/fog":40,"./scene/inspector":41,"./scene/keyboard-shortcuts":42,"./scene/stats":43,"./scene/vr-mode-ui":44,"./sound":45,"./tracked-controls":46,"./visible":47,"./vive-controls":48,"./wasd-controls":49}],28:[function(_dereq_,module,exports){
+},{"./blend-character-model":21,"./camera":22,"./collada-model":23,"./cursor":24,"./geometry":25,"./hand-controls":26,"./light":28,"./look-controls":29,"./material":30,"./obj-model":31,"./position":32,"./raycaster":33,"./rotation":34,"./scale":35,"./scene/canvas":36,"./scene/debug":37,"./scene/embedded":38,"./scene/fog":39,"./scene/inspector":40,"./scene/keyboard-shortcuts":41,"./scene/pool":42,"./scene/screenshot":43,"./scene/stats":44,"./scene/vr-mode-ui":45,"./sound":46,"./tracked-controls":47,"./visible":48,"./vive-controls":49,"./wasd-controls":50}],28:[function(_dereq_,module,exports){
 var bind = _dereq_('../utils/bind');
 var diff = _dereq_('../utils').diff;
 var debug = _dereq_('../utils/debug');
@@ -57634,8 +57670,7 @@ module.exports.Component = registerComponent('light', {
     groundColor: {type: 'color', if: {type: ['hemisphere']}},
     decay: {default: 1, if: {type: ['point', 'spot']}},
     distance: {default: 0.0, min: 0, if: {type: ['point', 'spot']}},
-    intensity: {default: 1.0, min: 0,
-                if: {type: ['ambient', 'directional', 'hemisphere', 'point', 'spot']}},
+    intensity: {default: 1.0, min: 0, if: {type: ['ambient', 'directional', 'hemisphere', 'point', 'spot']}},
     penumbra: {default: 0, min: 0, max: 1, if: {type: ['spot']}},
     type: {default: 'directional',
            oneOf: ['ambient', 'directional', 'hemisphere', 'point', 'spot']},
@@ -57811,106 +57846,10 @@ module.exports.Component = registerComponent('light', {
   }
 });
 
-},{"../core/component":60,"../lib/three":104,"../utils":122,"../utils/bind":116,"../utils/debug":119}],29:[function(_dereq_,module,exports){
-var debug = _dereq_('../utils/debug');
-var coordinates = _dereq_('../utils/coordinates');
+},{"../core/component":61,"../lib/three":104,"../utils":122,"../utils/bind":116,"../utils/debug":118}],29:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 var THREE = _dereq_('../lib/three');
-
-var warn = debug('components:look-at:warn');
-var isCoordinate = coordinates.isCoordinate;
-
-/**
- * Look-at component.
- *
- * Modifies rotation to either track another entity OR do a one-time turn towards a position
- * vector.
- *
- * If tracking an object via setting the component value via a selector, look-at will register
- * a behavior to the scene to update rotation on every tick.
- */
-module.exports.Component = registerComponent('look-at', {
-  schema: {
-    default: '',
-
-    parse: function (value) {
-      // A static position to look at.
-      if (isCoordinate(value) || typeof value === 'object') {
-        return coordinates.parse(value);
-      }
-      // A selector to a target entity.
-      return value;
-    },
-
-    stringify: function (data) {
-      if (typeof data === 'object') {
-        return coordinates.stringify(data);
-      }
-      return data;
-    }
-  },
-
-  init: function () {
-    this.target3D = null;
-    this.vector = new THREE.Vector3();
-    warn('The `look-at` component is deprecated - ' +
-         'use https://github.com/ngokevin/aframe-look-at-component instead.');
-  },
-
-  /**
-   * If tracking an object, this will be called on every tick.
-   * If looking at a position vector, this will only be called once (until further updates).
-   */
-  update: function () {
-    var self = this;
-    var target = self.data;
-    var object3D = self.el.object3D;
-    var targetEl;
-
-    // No longer looking at anything (i.e., look-at="").
-    if (!target || (typeof target === 'object' && !Object.keys(target).length)) {
-      return self.remove();
-    }
-
-    // Look at a position.
-    if (typeof target === 'object') {
-      return object3D.lookAt(new THREE.Vector3(target.x, target.y, target.z));
-    }
-
-    // Assume target is a string.
-    // Query for the element, grab its object3D, then register a behavior on the scene to
-    // track the target on every tick.
-    targetEl = self.el.sceneEl.querySelector(target);
-    if (!targetEl) {
-      warn('"' + target + '" does not point to a valid entity to look-at');
-      return;
-    }
-    if (!targetEl.hasLoaded) {
-      return targetEl.addEventListener('loaded', function () {
-        self.beginTracking(targetEl);
-      });
-    }
-    return self.beginTracking(targetEl);
-  },
-
-  tick: function (t) {
-    // Track target object position. Depends on parent object keeping global transforms up
-    // to state with updateMatrixWorld(). In practice, this is handled by the renderer.
-    var target3D = this.target3D;
-    if (target3D) {
-      return this.el.object3D.lookAt(this.vector.setFromMatrixPosition(target3D.matrixWorld));
-    }
-  },
-
-  beginTracking: function (targetEl) {
-    this.target3D = targetEl.object3D;
-  }
-});
-
-},{"../core/component":60,"../lib/three":104,"../utils/coordinates":118,"../utils/debug":119}],30:[function(_dereq_,module,exports){
-var registerComponent = _dereq_('../core/component').registerComponent;
-var THREE = _dereq_('../lib/three');
-var isMobile = _dereq_('../utils/').isMobile();
+var isMobile = _dereq_('../utils/').device.isMobile();
 var bind = _dereq_('../utils/bind');
 
 // To avoid recalculation at every mouse movement tick
@@ -57923,6 +57862,7 @@ module.exports.Component = registerComponent('look-controls', {
   schema: {
     enabled: {default: true},
     hmdEnabled: {default: true},
+    reverseMouseDrag: {default: false},
     standing: {default: true}
   },
 
@@ -58055,14 +57995,22 @@ module.exports.Component = registerComponent('look-controls', {
           z: radToDeg(hmdEuler.z)
         };
       } else if (!sceneEl.is('vr-mode') || isNullVector(hmdEuler) || !this.data.hmdEnabled) {
-        currentRotation = this.el.getComputedAttribute('rotation');
+        currentRotation = this.el.getAttribute('rotation');
         deltaRotation = this.calculateDeltaRotation();
         // Mouse look only if HMD disabled or no info coming from the sensors
-        rotation = {
-          x: currentRotation.x + deltaRotation.x,
-          y: currentRotation.y + deltaRotation.y,
-          z: currentRotation.z
-        };
+        if (this.data.reverseMouseDrag) {
+          rotation = {
+            x: currentRotation.x - deltaRotation.x,
+            y: currentRotation.y - deltaRotation.y,
+            z: currentRotation.z
+          };
+        } else {
+          rotation = {
+            x: currentRotation.x + deltaRotation.x,
+            y: currentRotation.y + deltaRotation.y,
+            z: currentRotation.z
+          };
+        }
       } else {
         // Mouse rotation ignored with an active headset.
         // The user head rotation takes priority
@@ -58107,7 +58055,7 @@ module.exports.Component = registerComponent('look-controls', {
     var deltaHMDPosition = new THREE.Vector3();
     return function () {
       var el = this.el;
-      var currentPosition = el.getComputedAttribute('position');
+      var currentPosition = el.getAttribute('position');
       var currentHMDPosition;
       var previousHMDPosition = this.previousHMDPosition;
       var sceneEl = this.el.sceneEl;
@@ -58197,7 +58145,7 @@ function isNullVector (vector) {
   return vector.x === 0 && vector.y === 0 && vector.z === 0;
 }
 
-},{"../core/component":60,"../lib/three":104,"../utils/":122,"../utils/bind":116}],31:[function(_dereq_,module,exports){
+},{"../core/component":61,"../lib/three":104,"../utils/":122,"../utils/bind":116}],30:[function(_dereq_,module,exports){
 /* global Promise */
 var utils = _dereq_('../utils/');
 var component = _dereq_('../core/component');
@@ -58365,7 +58313,7 @@ function disposeMaterial (material, system) {
   system.unregisterMaterial(material);
 }
 
-},{"../core/component":60,"../core/shader":68,"../lib/three":104,"../utils/":122}],32:[function(_dereq_,module,exports){
+},{"../core/component":61,"../core/shader":69,"../lib/three":104,"../utils/":122}],31:[function(_dereq_,module,exports){
 var debug = _dereq_('../utils/debug');
 var registerComponent = _dereq_('../core/component').registerComponent;
 var THREE = _dereq_('../lib/three');
@@ -58376,8 +58324,8 @@ module.exports.Component = registerComponent('obj-model', {
   dependencies: ['material'],
 
   schema: {
-    mtl: {type: 'src'},
-    obj: {type: 'src'}
+    mtl: {type: 'model'},
+    obj: {type: 'model'}
   },
 
   init: function () {
@@ -58443,7 +58391,7 @@ module.exports.Component = registerComponent('obj-model', {
   }
 });
 
-},{"../core/component":60,"../lib/three":104,"../utils/debug":119}],33:[function(_dereq_,module,exports){
+},{"../core/component":61,"../lib/three":104,"../utils/debug":118}],32:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 
 module.exports.Component = registerComponent('position', {
@@ -58456,9 +58404,10 @@ module.exports.Component = registerComponent('position', {
   }
 });
 
-},{"../core/component":60}],34:[function(_dereq_,module,exports){
+},{"../core/component":61}],33:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 var THREE = _dereq_('../lib/three');
+var bind = _dereq_('../utils/').bind;
 
 var scaleDummy = new THREE.Vector3();
 
@@ -58490,6 +58439,17 @@ module.exports.Component = registerComponent('raycaster', {
     this.prevCheckTime = undefined;
     this.raycaster = new THREE.Raycaster();
     this.updateOriginDirection();
+    this.refreshObjects = bind(this.refreshObjects, this);
+  },
+
+  play: function () {
+    this.el.sceneEl.addEventListener('child-attached', this.refreshObjects);
+    this.el.sceneEl.addEventListener('child-detached', this.refreshObjects);
+  },
+
+  pause: function () {
+    this.el.sceneEl.removeEventListener('child-attached', this.refreshObjects);
+    this.el.sceneEl.removeEventListener('child-detached', this.refreshObjects);
   },
 
   /**
@@ -58568,7 +58528,7 @@ module.exports.Component = registerComponent('raycaster', {
     // Emit all intersections at once on raycasting entity.
     if (intersections.length) {
       el.emit('raycaster-intersection', {
-        els: intersectedEls,
+        els: intersectedEls.slice(),
         intersections: intersections
       });
     }
@@ -58606,7 +58566,7 @@ module.exports.Component = registerComponent('raycaster', {
   })()
 });
 
-},{"../core/component":60,"../lib/three":104}],35:[function(_dereq_,module,exports){
+},{"../core/component":61,"../lib/three":104,"../utils/":122}],34:[function(_dereq_,module,exports){
 var degToRad = _dereq_('../lib/three').Math.degToRad;
 var registerComponent = _dereq_('../core/component').registerComponent;
 
@@ -58624,7 +58584,7 @@ module.exports.Component = registerComponent('rotation', {
   }
 });
 
-},{"../core/component":60,"../lib/three":104}],36:[function(_dereq_,module,exports){
+},{"../core/component":61,"../lib/three":104}],35:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 
 // Avoids triggering a zero-determinant which makes object3D matrix non-invertible.
@@ -58646,7 +58606,7 @@ module.exports.Component = registerComponent('scale', {
   }
 });
 
-},{"../core/component":60}],37:[function(_dereq_,module,exports){
+},{"../core/component":61}],36:[function(_dereq_,module,exports){
 var bind = _dereq_('../../utils/bind');
 var register = _dereq_('../../core/component').registerComponent;
 
@@ -58704,14 +58664,14 @@ module.exports.Component = register('canvas', {
 
 });
 
-},{"../../core/component":60,"../../utils/bind":116}],38:[function(_dereq_,module,exports){
+},{"../../core/component":61,"../../utils/bind":116}],37:[function(_dereq_,module,exports){
 var register = _dereq_('../../core/component').registerComponent;
 
 module.exports.Component = register('debug', {
   schema: {default: true}
 });
 
-},{"../../core/component":60}],39:[function(_dereq_,module,exports){
+},{"../../core/component":61}],38:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../../core/component').registerComponent;
 
 /**
@@ -58736,7 +58696,7 @@ module.exports.Component = registerComponent('embedded', {
 
 });
 
-},{"../../core/component":60}],40:[function(_dereq_,module,exports){
+},{"../../core/component":61}],39:[function(_dereq_,module,exports){
 var register = _dereq_('../../core/component').registerComponent;
 var THREE = _dereq_('../../lib/three');
 var debug = _dereq_('../../utils/debug');
@@ -58811,13 +58771,17 @@ function getFog (data) {
   return fog;
 }
 
-},{"../../core/component":60,"../../lib/three":104,"../../utils/debug":119}],41:[function(_dereq_,module,exports){
+},{"../../core/component":61,"../../lib/three":104,"../../utils/debug":118}],40:[function(_dereq_,module,exports){
 /* global AFRAME */
 var AFRAME_INJECTED = _dereq_('../../constants').AFRAME_INJECTED;
+var bind = _dereq_('../../utils/bind');
 var pkg = _dereq_('../../../package');
 var registerComponent = _dereq_('../../core/component').registerComponent;
 
-var INSPECTOR_URL = pkg.homepage + 'releases/' + pkg.version + '/aframe-inspector.min.js';
+var INSPECTOR_DEV_URL = 'https://aframe.io/aframe-inspector/build/aframe-inspector.js';
+var INSPECTOR_RELEASE_URL = pkg.homepage + 'releases/' + pkg.version + '/aframe-inspector.min.js';
+var INSPECTOR_URL = "dev" === 'dev' ? INSPECTOR_DEV_URL : INSPECTOR_RELEASE_URL;
+var LOADING_MESSAGE = 'Loading Inspector';
 
 module.exports.Component = registerComponent('inspector', {
   schema: {
@@ -58825,15 +58789,46 @@ module.exports.Component = registerComponent('inspector', {
   },
 
   init: function () {
-    this.onKeydown = this.onKeydown.bind(this);
+    this.onKeydown = bind(this.onKeydown, this);
+    this.onMessage = bind(this.onMessage, this);
+    this.initOverlay();
     window.addEventListener('keydown', this.onKeydown);
+    window.addEventListener('message', this.onMessage);
   },
 
+  initOverlay: function () {
+    var dotsHTML = '<span class="dots"><span>.</span><span>.</span><span>.</span></span>';
+    this.loadingMessageEl = document.createElement('div');
+    this.loadingMessageEl.classList.add('a-inspector-loader');
+    this.loadingMessageEl.innerHTML = LOADING_MESSAGE + dotsHTML;
+  },
+
+  remove: function () {
+    this.removeEventListeners();
+  },
+
+  /**
+   * <ctrl> + <alt> + i keyboard shortcut.
+   */
   onKeydown: function (evt) {
-    // Alt + Ctrl + i
     var shortcutPressed = evt.keyCode === 73 && evt.ctrlKey && evt.altKey;
     if (!this.data || !shortcutPressed) { return; }
     this.injectInspector();
+  },
+
+  showLoader: function () {
+    document.body.appendChild(this.loadingMessageEl);
+  },
+
+  hideLoader: function () {
+    this.el.removeChild(this.loadingMessageEl);
+  },
+
+  /**
+   * postMessage. aframe.io uses this to create a button on examples to open Inspector.
+   */
+  onMessage: function (evt) {
+    if (evt.data === 'INJECT_AFRAME_INSPECTOR') { this.injectInspector(); }
   },
 
   injectInspector: function () {
@@ -58842,6 +58837,8 @@ module.exports.Component = registerComponent('inspector', {
 
     if (AFRAME.INSPECTOR || AFRAME.inspectorInjected) { return; }
 
+    this.showLoader();
+
     // Inject.
     script = document.createElement('script');
     script.src = this.data.url;
@@ -58849,18 +58846,20 @@ module.exports.Component = registerComponent('inspector', {
     script.setAttribute(AFRAME_INJECTED, '');
     script.onload = function () {
       AFRAME.INSPECTOR.open();
-      window.removeEventListener('keydown', self.onKeydown);
+      self.hideLoader();
+      self.removeEventListeners();
     };
     document.head.appendChild(script);
     AFRAME.inspectorInjected = true;
   },
 
-  remove: function () {
+  removeEventListeners: function () {
     window.removeEventListener('keydown', this.onKeydown);
+    window.removeEventListener('message', this.onMessage);
   }
 });
 
-},{"../../../package":20,"../../constants":51,"../../core/component":60}],42:[function(_dereq_,module,exports){
+},{"../../../package":20,"../../constants":52,"../../core/component":61,"../../utils/bind":116}],41:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../../core/component').registerComponent;
 var shouldCaptureKeyEvent = _dereq_('../../utils/').shouldCaptureKeyEvent;
 var THREE = _dereq_('../../lib/three');
@@ -58903,16 +58902,350 @@ module.exports.Component = registerComponent('keyboard-shortcuts', {
   }
 });
 
-},{"../../core/component":60,"../../lib/three":104,"../../utils/":122}],43:[function(_dereq_,module,exports){
+},{"../../core/component":61,"../../lib/three":104,"../../utils/":122}],42:[function(_dereq_,module,exports){
+var debug = _dereq_('../../utils/debug');
+var registerComponent = _dereq_('../../core/component').registerComponent;
+
+var warn = debug('components:pool:warn');
+
+/**
+ * Pool component.
+ * A pool of entities that will be reused.
+ * It avoids creating and destroying the same kind of entities
+ * in dynamic scenes. It will help reduce GC pauses. Useful for example
+ * in a game where you want to reuse enemies entities.
+ *
+ * @member {array} availableEls - Available entities in the pool.
+ * @member {array} useedEls - Entities of the pool in use.
+ *
+ */
+module.exports.Component = registerComponent('pool', {
+  schema: {
+    mixin: {default: ''},
+    size: {default: 0},
+    dynamic: {default: false}
+  },
+
+  multiple: true,
+
+  init: function () {
+    this.initPool();
+  },
+
+  initPool: function () {
+    var i;
+    var mixin = this.data.mixin;
+    if (!mixin) { return; }
+    this.availableEls = [];
+    this.usedEls = [];
+    for (i = 0; i < this.data.size; ++i) {
+      this.createEntity();
+    }
+  },
+
+  update: function (oldData) {
+    var data = this.data;
+    if (oldData.mixin !== data.mixin || oldData.size !== data.size) {
+      this.initPool();
+    }
+  },
+
+  /**
+   * Add a new entity to the list of available entities.
+   */
+  createEntity: function () {
+    var el = document.createElement('a-entity');
+    el.play = this.wrapPlay(el.play);
+    el.setAttribute('mixin', this.data.mixin);
+    el.setAttribute('visible', false);
+    this.el.appendChild(el);
+    this.availableEls.push(el);
+  },
+
+  /**
+   * Play wrapper for pooled entities. When pausing and playing
+   * a scene we don't want to play the entities that are not in use
+   */
+  wrapPlay: function (playMethod) {
+    var usedEls = this.usedEls;
+    return function () {
+      if (usedEls.indexOf(this) === -1) { return; }
+      playMethod.call(this);
+    };
+  },
+
+  /**
+   * Used to request one of the available entities of the pool
+   */
+  requestEntity: function () {
+    var el;
+    if (this.availableEls.length === 0) {
+      if (this.data.dynamic === false) {
+        warn('Requested entity from empty pool ' + this.name);
+        return;
+      } else {
+        warn('Requested entity from empty pool. This pool is dynamic' +
+        'and will resize automatically. You might want to increase its initial size' + this.name);
+      }
+      this.createEntity();
+    }
+    el = this.availableEls.shift();
+    this.usedEls.push(el);
+    el.setAttribute('visible', true);
+    return el;
+  },
+
+  /**
+   * Used to return a used entity to the pool
+   */
+  returnEntity: function (el) {
+    var index = this.usedEls.indexOf(el);
+    if (index === -1) {
+      warn('The returned entity was not previously pooled from ' + this.name);
+      return;
+    }
+    this.usedEls.splice(index, 1);
+    this.availableEls.push(el);
+    el.setAttribute('visible', false);
+    el.pause();
+  }
+});
+
+},{"../../core/component":61,"../../utils/debug":118}],43:[function(_dereq_,module,exports){
+/* global ImageData, URL */
+var registerComponent = _dereq_('../../core/component').registerComponent;
+var THREE = _dereq_('../../lib/three');
+
+var VERTEX_SHADER = [
+  'attribute vec3 position;',
+  'attribute vec2 uv;',
+  'uniform mat4 projectionMatrix;',
+  'uniform mat4 modelViewMatrix;',
+  'varying vec2 vUv;',
+  'void main()  {',
+  '  vUv = vec2( 1.- uv.x, uv.y );',
+  '  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );'
+].join('\n');
+
+var FRAGMENT_SHADER = [
+  'precision mediump float',
+  'uniform samplerCube map',
+  'varying vec2 vUv',
+  '#define M_PI 3.141592653589793238462643383279',
+  'void main()  ',
+  '  vec2 uv = vUv',
+  '  float longitude = uv.x * 2. * M_PI - M_PI + M_PI / 2.',
+  '  float latitude = uv.y * M_PI',
+  '  vec3 dir = vec3',
+  '    - sin( longitude ) * sin( latitude )',
+  '    cos( latitude )',
+  '    - cos( longitude ) * sin( latitude ',
+  '  )',
+  '  normalize( dir )',
+  '  gl_FragColor = vec4( textureCube( map, dir ).rgb, 1.0 )'
+].join('\n');
+
+/**
+ * Component to take screenshots of the scene using a keboard shortcut (alt+s).
+ * It can be configured to either take 360&deg; captures (`equirectangular`)
+ * or regular screenshots (`projection`)
+ *
+ * This is based on https://github.com/spite/THREE.CubemapToEquirectangular
+ * To capture an equirectangular projection of the scene a THREE.CubeCamera is used
+ * The cube map produced by the CubeCamera is projected on a quad and then rendered to
+ * WebGLRenderTarget with an ortographic camera.
+ */
+module.exports.Component = registerComponent('screenshot', {
+  schema: {
+    width: {default: 4096},
+    height: {default: 2048},
+    projection: {default: 'equirectangular', oneOf: ['equirectangular', 'perspective']}
+  },
+
+  init: function () {
+    var el = this.el;
+    var self = this;
+    if (el.renderer) {
+      setup();
+    } else {
+      el.addEventListener('render-target-loaded', setup);
+    }
+    function setup () {
+      var gl = el.renderer.getContext();
+      self.cubeMapSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
+      self.material = new THREE.RawShaderMaterial({
+        uniforms: {map: {type: 't', value: null}},
+        vertexShader: VERTEX_SHADER,
+        fragmentShader: FRAGMENT_SHADER,
+        side: THREE.DoubleSide
+      });
+      self.quad = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(1, 1),
+        self.material
+      );
+      self.quad.visible = false;
+      self.camera = new THREE.OrthographicCamera(1 / -2, 1 / 2, 1 / 2, 1 / -2, -10000, 10000);
+      self.canvas = document.createElement('canvas');
+      self.ctx = self.canvas.getContext('2d');
+      if (el.camera) { el.camera.add(self.quad); }
+      self.onKeyDown = self.onKeyDown.bind(self);
+      self.onCameraActive = self.onCameraActive.bind(self);
+      el.addEventListener('camera-set-active', self.onCameraActive);
+    }
+  },
+
+  getRenderTarget: function (width, height) {
+    return new THREE.WebGLRenderTarget(width, height, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      wrapS: THREE.ClampToEdgeWrapping,
+      wrapT: THREE.ClampToEdgeWrapping,
+      format: THREE.RGBAFormat,
+      type: THREE.UnsignedByteType
+    });
+  },
+
+  resize: function (width, height) {
+    // Resize quad
+    this.quad.scale.set(width, height, 1);
+
+    // Resize Camera
+    this.camera.left = width / -2;
+    this.camera.right = width / 2;
+    this.camera.top = height / 2;
+    this.camera.bottom = height / -2;
+    this.camera.updateProjectionMatrix();
+
+    // Resize canvas
+    this.canvas.width = width;
+    this.canvas.height = height;
+  },
+
+  play: function () {
+    window.addEventListener('keydown', this.onKeyDown);
+  },
+
+  onCameraActive: function (evt) {
+    var cameraParent = this.quad.parent;
+    if (cameraParent) { cameraParent.remove(this.quad); }
+    evt.detail.cameraEl.getObject3D('camera').add(this.quad);
+  },
+
+  /**
+   * <ctrl> + <alt> + s keyboard shortcut.
+   */
+  onKeyDown: function (evt) {
+    var shortcutPressed = evt.keyCode === 83 && evt.ctrlKey && evt.altKey;
+    if (!this.data || !shortcutPressed) { return; }
+    this.capture();
+  },
+
+  capture: function () {
+    var el = this.el;
+    var renderer = el.renderer;
+    var size;
+    var camera;
+    var cubeCamera;
+    // Configure camera
+    if (this.data.projection === 'perspective') {
+      // the quad is used for projection in the equirectangular mode
+      // we hide it in this case.
+      this.quad.visible = false;
+      // use scene camera
+      camera = el.camera;
+      size = renderer.getSize();
+    } else {
+      // use ortho camera
+      camera = this.camera;
+      // copy position and rotation of scene camera into the ortho one
+      camera.position.copy(el.camera.getWorldPosition());
+      camera.rotation.copy(el.camera.getWorldRotation());
+      // create cube camera and copy position from scene camera
+      cubeCamera = new THREE.CubeCamera(el.camera.near, el.camera.far, Math.min(this.cubeMapSize, 2048));
+      cubeCamera.position.copy(el.camera.getWorldPosition());
+      cubeCamera.rotation.copy(el.camera.getWorldRotation());
+      // render scene with cube camera
+      cubeCamera.updateCubeMap(el.renderer, el.object3D);
+      this.quad.material.uniforms.map.value = cubeCamera.renderTarget.texture;
+      size = {width: this.data.width, height: this.data.height};
+      // use quad to project image taken by the cube camera
+      this.quad.visible = true;
+    }
+    this.renderCapture(camera, size);
+    // Trigger file download
+    this.saveCapture();
+  },
+
+  renderCapture: function (camera, size) {
+    var autoClear = this.el.renderer.autoClear;
+    var el = this.el;
+    var imageData;
+    var output;
+    var pixels;
+    var renderer = this.el.renderer;
+    // Create rendering target and buffer to store the read pixels
+    output = this.getRenderTarget(size.width, size.height);
+    pixels = new Uint8Array(4 * size.width * size.height);
+    // Resize quad, camera and canvas
+    this.resize(size.width, size.height);
+    // Render scene to render target
+    renderer.autoClear = true;
+    renderer.render(el.object3D, camera, output, true);
+    renderer.autoClear = autoClear;
+    // Read image pizels back
+    renderer.readRenderTargetPixels(output, 0, 0, size.width, size.height, pixels);
+    if (this.data.projection === 'perspective') {
+      pixels = this.flipPixelsVertically(pixels, size.width, size.height);
+    }
+    imageData = new ImageData(new Uint8ClampedArray(pixels), size.width, size.height);
+    // Hide quad after projecting the image
+    this.quad.visible = false;
+    // Copy pixels into canvas
+    this.ctx.putImageData(imageData, 0, 0);
+  },
+
+  flipPixelsVertically: function (pixels, width, height) {
+    var flippedPixels = pixels.slice(0);
+    for (var x = 0; x < width; ++x) {
+      for (var y = 0; y < height; ++y) {
+        flippedPixels[x * 4 + y * width * 4] = pixels[x * 4 + (height - y) * width * 4];
+        flippedPixels[x * 4 + 1 + y * width * 4] = pixels[x * 4 + 1 + (height - y) * width * 4];
+        flippedPixels[x * 4 + 2 + y * width * 4] = pixels[x * 4 + 2 + (height - y) * width * 4];
+        flippedPixels[x * 4 + 3 + y * width * 4] = pixels[x * 4 + 3 + (height - y) * width * 4];
+      }
+    }
+    return flippedPixels;
+  },
+
+  saveCapture: function () {
+    this.canvas.toBlob(function (blob) {
+      var url = URL.createObjectURL(blob);
+      var fileName = 'screenshot-' + document.title + '-' + Date.now() + '.png';
+      var aEl = document.createElement('a');
+      aEl.href = url;
+      aEl.setAttribute('download', fileName);
+      aEl.innerHTML = 'downloading...';
+      aEl.style.display = 'none';
+      document.body.appendChild(aEl);
+      setTimeout(function () {
+        aEl.click();
+        document.body.removeChild(aEl);
+      }, 1);
+    }, 'image/png');
+  }
+});
+
+},{"../../core/component":61,"../../lib/three":104}],44:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../../core/component').registerComponent;
 var RStats = _dereq_('../../../vendor/rStats');
-var bind = _dereq_('../../utils/bind');
+var utils = _dereq_('../../utils');
 _dereq_('../../../vendor/rStats.extras');
 _dereq_('../../lib/rStatsAframe');
 
+var AFrameStats = window.aframeStats;
+var bind = utils.bind;
 var HIDDEN_CLASS = 'a-hidden';
 var ThreeStats = window.threeStats;
-var AFrameStats = window.aframeStats;
 
 /**
  * Stats appended to document.body by RStats.
@@ -58922,6 +59255,9 @@ module.exports.Component = registerComponent('stats', {
 
   init: function () {
     var scene = this.el;
+
+    if (utils.getUrlParameter('stats') === 'false') { return; }
+
     this.stats = createStats(scene);
     this.statsEl = document.querySelector('.rs-base');
 
@@ -58933,6 +59269,7 @@ module.exports.Component = registerComponent('stats', {
   },
 
   update: function () {
+    if (!this.stats) { return; }
     return (!this.data) ? this.hide() : this.show();
   },
 
@@ -58944,6 +59281,9 @@ module.exports.Component = registerComponent('stats', {
 
   tick: function () {
     var stats = this.stats;
+
+    if (!stats) { return; }
+
     stats('rAF').tick();
     stats('FPS').frame();
     stats().update();
@@ -58974,7 +59314,7 @@ function createStats (scene) {
   });
 }
 
-},{"../../../vendor/rStats":129,"../../../vendor/rStats.extras":128,"../../core/component":60,"../../lib/rStatsAframe":103,"../../utils/bind":116}],44:[function(_dereq_,module,exports){
+},{"../../../vendor/rStats":129,"../../../vendor/rStats.extras":128,"../../core/component":61,"../../lib/rStatsAframe":103,"../../utils":122}],45:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../../core/component').registerComponent;
 var constants = _dereq_('../../constants/');
 var utils = _dereq_('../../utils/');
@@ -59067,7 +59407,7 @@ module.exports.Component = registerComponent('vr-mode-ui', {
     var sceneEl = this.el;
     var orientationModalEl = this.orientationModalEl;
     if (!orientationModalEl || !sceneEl.isMobile) { return; }
-    if (!utils.isLandscape() && sceneEl.is('vr-mode')) {
+    if (!utils.device.isLandscape() && sceneEl.is('vr-mode')) {
       // Show if in VR mode on portrait.
       orientationModalEl.classList.remove(HIDDEN_CLASS);
     } else {
@@ -59123,7 +59463,7 @@ function createOrientationModal (exitVRHandler) {
   return modal;
 }
 
-},{"../../constants/":51,"../../core/component":60,"../../utils/":122}],45:[function(_dereq_,module,exports){
+},{"../../constants/":52,"../../core/component":61,"../../utils/":122}],46:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 var debug = _dereq_('../utils/debug');
 var bind = _dereq_('../utils/bind');
@@ -59136,10 +59476,11 @@ var warn = debug('components:sound:warn');
  */
 module.exports.Component = registerComponent('sound', {
   schema: {
-    src: {type: 'src'},
-    on: { default: '' },
     autoplay: {default: false},
     loop: {default: false},
+    on: {default: ''},
+    poolSize: {default: 1},
+    src: {type: 'audio'},
     volume: {default: 1}
   },
 
@@ -59148,13 +59489,12 @@ module.exports.Component = registerComponent('sound', {
   init: function () {
     this.listener = null;
     this.audioLoader = new THREE.AudioLoader();
-    this.sound = null;
+    this.pool = new THREE.Group();
     this.playSound = bind(this.playSound, this);
   },
 
   update: function (oldData) {
     var data = this.data;
-    var sound = this.sound;
     var srcChanged = data.src !== oldData.src;
     // Create new sound if not yet created or changing `src`.
     if (srcChanged) {
@@ -59162,12 +59502,14 @@ module.exports.Component = registerComponent('sound', {
         warn('Audio source was not specified with `src`');
         return;
       }
-      sound = this.setupSound();
+      this.setupSound();
     }
 
-    sound.autoplay = data.autoplay;
-    sound.setLoop(data.loop);
-    sound.setVolume(data.volume);
+    this.pool.children.forEach(function (sound) {
+      sound.autoplay = data.autoplay;
+      sound.setLoop(data.loop);
+      sound.setVolume(data.volume);
+    });
 
     if (data.on !== oldData.on) {
       this.updateEventListener(oldData.on);
@@ -59175,11 +59517,37 @@ module.exports.Component = registerComponent('sound', {
 
     // All sound values set. Load in `src`.
     if (srcChanged) {
+      var self = this;
       this.audioLoader.load(data.src, function (buffer) {
-        sound.setBuffer(buffer);
+        self.pool.children.forEach(function (sound) {
+          sound.setBuffer(buffer);
+        });
         // Remove this key from cache, otherwise we can't play it again
         THREE.Cache.remove(data.src);
       });
+    }
+  },
+
+  pause: function () {
+    this.pauseSound();
+    this.removeEventListener();
+  },
+
+  play: function () {
+    if (this.data.autoplay) { this.playSound(); }
+    this.updateEventListener();
+  },
+
+  remove: function () {
+    this.removeEventListener();
+    this.el.removeObject3D(this.attrName);
+    try {
+      this.pool.children.forEach(function (sound) {
+        sound.disconnect();
+      });
+    } catch (e) {
+      // disconnect() will throw if it was never connected initially.
+      warn('Audio source not properly disconnected');
     }
   },
 
@@ -59196,33 +59564,6 @@ module.exports.Component = registerComponent('sound', {
     this.el.removeEventListener(this.data.on, this.playSound);
   },
 
-  remove: function () {
-    this.removeEventListener();
-    this.el.removeObject3D(this.attrName);
-    try {
-      this.sound.disconnect();
-    } catch (e) {
-      // disconnect() will throw if it was never connected initially.
-      warn('Audio source not properly disconnected');
-    }
-  },
-
-  play: function () {
-    if (!this.sound) { return; }
-    if (this.sound.source.buffer && this.data.autoplay) {
-      this.sound.play();
-    }
-    this.updateEventListener();
-  },
-
-  pause: function () {
-    if (!this.sound) { return; }
-    if (this.sound.source.buffer && this.sound.isPlaying) {
-      this.sound.pause();
-    }
-    this.removeEventListener();
-  },
-
   /**
    * Removes current sound object, creates new sound object, adds to entity.
    *
@@ -59231,9 +59572,8 @@ module.exports.Component = registerComponent('sound', {
   setupSound: function () {
     var el = this.el;
     var sceneEl = el.sceneEl;
-    var sound = this.sound;
 
-    if (sound) {
+    if (this.pool.children.length > 0) {
       this.stopSound();
       el.removeObject3D('sound');
     }
@@ -59251,29 +59591,63 @@ module.exports.Component = registerComponent('sound', {
       evt.detail.cameraEl.getObject3D('camera').add(listener);
     });
 
-    sound = this.sound = new THREE.PositionalAudio(listener);
-    el.setObject3D(this.attrName, sound);
+    // Create [poolSize] audio instances and attach them to pool
+    this.pool = new THREE.Group();
+    for (var i = 0; i < this.data.poolSize; i++) {
+      var sound = new THREE.PositionalAudio(listener);
+      this.pool.add(sound);
+    }
+    el.setObject3D(this.attrName, this.pool);
 
-    sound.source.onended = function () {
-      sound.onEnded();
-      el.emit('sound-ended');
-    };
-
-    return sound;
+    this.pool.children.forEach(function (sound) {
+      sound.source.onended = function () {
+        sound.onEnded();
+        el.emit('sound-ended', {index: i});
+      };
+    });
   },
 
+  /**
+   * Pause all the sounds in the pool.
+   */
+  pauseSound: function () {
+    this.pool.children.forEach(function (sound) {
+      if (!sound.source.buffer || !sound.isPlaying || !sound.pause) { return; }
+      sound.pause();
+    });
+  },
+
+  /**
+   * Look for an unused sound in the pool and play it if found.
+   */
   playSound: function () {
-    if (!this.sound.source.buffer) { return; }
-    this.sound.play();
+    var found = false;
+    this.pool.children.forEach(function (sound) {
+      if (!sound.isPlaying && sound.source.buffer && !found) {
+        sound.play();
+        found = true;
+        return;
+      }
+    });
+
+    if (!found) {
+      warn('All the sounds are playing. If you need to play more sounds simultaneously ' +
+           'consider increasing the size of pool with the `poolSize` attribute.');
+    }
   },
 
+  /**
+   * Stop all the sounds in the pool.
+   */
   stopSound: function () {
-    if (!this.sound.source.buffer) { return; }
-    this.sound.stop();
+    this.pool.children.forEach(function (sound) {
+      if (!sound.source.buffer) { return; }
+      sound.stop();
+    });
   }
 });
 
-},{"../core/component":60,"../lib/three":104,"../utils/bind":116,"../utils/debug":119}],46:[function(_dereq_,module,exports){
+},{"../core/component":61,"../lib/three":104,"../utils/bind":116,"../utils/debug":118}],47:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 var THREE = _dereq_('../lib/three');
 
@@ -59295,7 +59669,8 @@ module.exports.Component = registerComponent('tracked-controls', {
 
   init: function () {
     this.buttonStates = {};
-    this.axisState = [];
+    this.previousAxis = [];
+    this.previousControllerPosition = new THREE.Vector3();
   },
 
   update: function () {
@@ -59309,8 +59684,8 @@ module.exports.Component = registerComponent('tracked-controls', {
 
   tick: function (time, delta) {
     var mesh = this.el.getObject3D('mesh');
-    if (!mesh) { return; }
-    if (mesh.update) { mesh.update(delta / 1000); }
+    // Update mesh animations.
+    if (mesh && mesh.update) { mesh.update(delta / 1000); }
     this.updatePose();
     this.updateButtons();
   },
@@ -59319,6 +59694,7 @@ module.exports.Component = registerComponent('tracked-controls', {
     var controllerEuler = new THREE.Euler();
     var controllerPosition = new THREE.Vector3();
     var controllerQuaternion = new THREE.Quaternion();
+    var deltaControllerPosition = new THREE.Vector3();
     var dolly = new THREE.Object3D();
     var standingMatrix = new THREE.Matrix4();
     controllerEuler.order = 'YXZ';
@@ -59350,10 +59726,15 @@ module.exports.Component = registerComponent('tracked-controls', {
         y: THREE.Math.radToDeg(controllerEuler.y),
         z: THREE.Math.radToDeg(controllerEuler.z)
       });
+
+      deltaControllerPosition.copy(controllerPosition).sub(this.previousControllerPosition);
+      this.previousControllerPosition.copy(controllerPosition);
+      var currentPosition = el.getAttribute('position');
+
       el.setAttribute('position', {
-        x: controllerPosition.x,
-        y: controllerPosition.y,
-        z: controllerPosition.z
+        x: currentPosition.x + deltaControllerPosition.x,
+        y: currentPosition.y + deltaControllerPosition.y,
+        z: currentPosition.z + deltaControllerPosition.z
       });
     };
   })(),
@@ -59371,7 +59752,7 @@ module.exports.Component = registerComponent('tracked-controls', {
   },
 
   handleAxes: function (controllerAxes) {
-    var previousAxis = this.axisState;
+    var previousAxis = this.previousAxis;
     var changed = false;
     var i;
     for (i = 0; i < controllerAxes.length; ++i) {
@@ -59381,8 +59762,8 @@ module.exports.Component = registerComponent('tracked-controls', {
       }
     }
     if (!changed) { return; }
-    previousAxis = controllerAxes.slice();
-    this.el.emit('axismove', {axis: previousAxis});
+    this.previousAxis = controllerAxes.slice();
+    this.el.emit('axismove', {axis: this.previousAxis});
   },
 
   handleButton: function (id, buttonState) {
@@ -59434,7 +59815,7 @@ module.exports.Component = registerComponent('tracked-controls', {
   }
 });
 
-},{"../core/component":60,"../lib/three":104}],47:[function(_dereq_,module,exports){
+},{"../core/component":61,"../lib/three":104}],48:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 
 /**
@@ -59448,7 +59829,7 @@ module.exports.Component = registerComponent('visible', {
   }
 });
 
-},{"../core/component":60}],48:[function(_dereq_,module,exports){
+},{"../core/component":61}],49:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../core/component').registerComponent;
 var bind = _dereq_('../utils/bind');
 
@@ -59570,13 +59951,16 @@ module.exports.Component = registerComponent('vive-controls', {
   }
 });
 
-},{"../core/component":60,"../utils/bind":116}],49:[function(_dereq_,module,exports){
-var registerComponent = _dereq_('../core/component').registerComponent;
-var bind = _dereq_('../utils/bind');
-var shouldCaptureKeyEvent = _dereq_('../utils/').shouldCaptureKeyEvent;
+},{"../core/component":61,"../utils/bind":116}],50:[function(_dereq_,module,exports){
 var KEYCODE_TO_CODE = _dereq_('../constants').keyboardevent.KEYCODE_TO_CODE;
+var registerComponent = _dereq_('../core/component').registerComponent;
 var THREE = _dereq_('../lib/three');
+var utils = _dereq_('../utils/');
 
+var bind = utils.bind;
+var shouldCaptureKeyEvent = utils.shouldCaptureKeyEvent;
+
+var CLAMP_VELOCITY = 0.00001;
 var MAX_DELTA = 0.2;
 
 /**
@@ -59584,80 +59968,60 @@ var MAX_DELTA = 0.2;
  */
 module.exports.Component = registerComponent('wasd-controls', {
   schema: {
-    easing: {default: 20},
     acceleration: {default: 65},
+    adAxis: {default: 'x', oneOf: ['x', 'y', 'z']},
+    adEnabled: {default: true},
+    adInverted: {default: false},
+    easing: {default: 20},
     enabled: {default: true},
     fly: {default: false},
-    wsAxis: {default: 'z', oneOf: [ 'x', 'y', 'z' ]},
-    adAxis: {default: 'x', oneOf: [ 'x', 'y', 'z' ]},
-    wsInverted: {default: false},
+    wsAxis: {default: 'z', oneOf: ['x', 'y', 'z']},
     wsEnabled: {default: true},
-    adInverted: {default: false},
-    adEnabled: {default: true}
+    wsInverted: {default: false}
   },
 
   init: function () {
-    this.velocity = new THREE.Vector3();
-    // To keep track of the pressed keys
+    // To keep track of the pressed keys.
     this.keys = {};
+
+    this.velocity = new THREE.Vector3();
+
+    // Bind methods and add event listeners.
     this.onBlur = bind(this.onBlur, this);
     this.onFocus = bind(this.onFocus, this);
-    this.onVisibilityChange = bind(this.onVisibilityChange, this);
     this.onKeyDown = bind(this.onKeyDown, this);
     this.onKeyUp = bind(this.onKeyUp, this);
+    this.onVisibilityChange = bind(this.onVisibilityChange, this);
     this.attachVisibilityEventListeners();
   },
 
-  update: function (previousData) {
+  tick: function (time, delta) {
     var data = this.data;
-    var acceleration = data.acceleration;
-    var easing = data.easing;
-    var velocity = this.velocity;
-    var prevTime = this.prevTime = this.prevTime || Date.now();
-    var time = window.performance.now();
-    var delta = (time - prevTime) / 1000;
-    var keys = this.keys;
-    var movementVector;
-    var adAxis = data.adAxis;
-    var wsAxis = data.wsAxis;
-    var adSign = data.adInverted ? -1 : 1;
-    var wsSign = data.wsInverted ? -1 : 1;
     var el = this.el;
-    this.prevTime = time;
+    var movementVector;
+    var position;
+    var velocity = this.velocity;
 
-    // If data changed or FPS too low, reset velocity.
-    if (previousData || delta > MAX_DELTA) {
-      velocity[adAxis] = 0;
-      velocity[wsAxis] = 0;
-      return;
-    }
+    // Use seconds.
+    delta = delta / 1000;
 
-    velocity[adAxis] -= velocity[adAxis] * easing * delta;
-    velocity[wsAxis] -= velocity[wsAxis] * easing * delta;
+    // Get velocity.
+    this.updateVelocity(delta);
+    if (!velocity[data.adAxis] && !velocity[data.wsAxis]) { return; }
 
-    var position = el.getComputedAttribute('position');
-
-    if (data.enabled) {
-      if (data.adEnabled) {
-        if (keys.KeyA || keys.ArrowLeft) { velocity[adAxis] -= adSign * acceleration * delta; }
-        if (keys.KeyD || keys.ArrowRight) { velocity[adAxis] += adSign * acceleration * delta; }
-      }
-      if (data.wsEnabled) {
-        if (keys.KeyW || keys.ArrowUp) { velocity[wsAxis] -= wsSign * acceleration * delta; }
-        if (keys.KeyS || keys.ArrowDown) { velocity[wsAxis] += wsSign * acceleration * delta; }
-      }
-    }
-
+    // Get movement vector and translate position.
     movementVector = this.getMovementVector(delta);
-    el.object3D.translateX(movementVector.x);
-    el.object3D.translateY(movementVector.y);
-    el.object3D.translateZ(movementVector.z);
-
+    position = el.getAttribute('position');
     el.setAttribute('position', {
       x: position.x + movementVector.x,
       y: position.y + movementVector.y,
       z: position.z + movementVector.z
     });
+  },
+
+  remove: function () {
+    this.removeKeyEventListeners();
+    this.removeVisibilityEventListeners();
   },
 
   play: function () {
@@ -59669,14 +60033,76 @@ module.exports.Component = registerComponent('wasd-controls', {
     this.removeKeyEventListeners();
   },
 
-  tick: function (t) {
-    this.update();
+  updateVelocity: function (delta) {
+    var acceleration;
+    var adAxis;
+    var adSign;
+    var data = this.data;
+    var keys = this.keys;
+    var velocity = this.velocity;
+    var wsAxis;
+    var wsSign;
+
+    adAxis = data.adAxis;
+    wsAxis = data.wsAxis;
+
+    // If FPS too low, reset velocity.
+    if (delta > MAX_DELTA) {
+      velocity[adAxis] = 0;
+      velocity[wsAxis] = 0;
+      return;
+    }
+
+    // Decay velocity.
+    if (velocity[adAxis] !== 0) {
+      velocity[adAxis] -= velocity[adAxis] * data.easing * delta;
+    }
+    if (velocity[wsAxis] !== 0) {
+      velocity[wsAxis] -= velocity[wsAxis] * data.easing * delta;
+    }
+
+    // Clamp velocity easing.
+    if (Math.abs(velocity[adAxis]) < CLAMP_VELOCITY) { velocity[adAxis] = 0; }
+    if (Math.abs(velocity[wsAxis]) < CLAMP_VELOCITY) { velocity[wsAxis] = 0; }
+
+    if (!data.enabled) { return; }
+
+    // Update velocity using keys pressed.
+    acceleration = data.acceleration;
+    if (data.adEnabled) {
+      adSign = data.adInverted ? -1 : 1;
+      if (keys.KeyA || keys.ArrowLeft) { velocity[adAxis] -= adSign * acceleration * delta; }
+      if (keys.KeyD || keys.ArrowRight) { velocity[adAxis] += adSign * acceleration * delta; }
+    }
+    if (data.wsEnabled) {
+      wsSign = data.wsInverted ? -1 : 1;
+      if (keys.KeyW || keys.ArrowUp) { velocity[wsAxis] -= wsSign * acceleration * delta; }
+      if (keys.KeyS || keys.ArrowDown) { velocity[wsAxis] += wsSign * acceleration * delta; }
+    }
   },
 
-  remove: function () {
-    this.pause();
-    this.removeVisibilityEventListeners();
-  },
+  getMovementVector: (function () {
+    var directionVector = new THREE.Vector3(0, 0, 0);
+    var rotationEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+
+    return function (delta) {
+      var rotation = this.el.getAttribute('rotation');
+      var velocity = this.velocity;
+
+      directionVector.copy(velocity);
+      directionVector.multiplyScalar(delta);
+
+      // Absolute.
+      if (!rotation) { return directionVector; }
+
+      if (!this.data.fly) { rotation.x = 0; }
+
+      // Transform direction relative to heading.
+      rotationEuler.set(THREE.Math.degToRad(rotation.x), THREE.Math.degToRad(rotation.y), 0);
+      directionVector.applyEuler(rotationEuler);
+      return directionVector;
+    };
+  })(),
 
   attachVisibilityEventListeners: function () {
     window.addEventListener('blur', this.onBlur);
@@ -59717,36 +60143,21 @@ module.exports.Component = registerComponent('wasd-controls', {
   },
 
   onKeyDown: function (event) {
+    var code;
     if (!shouldCaptureKeyEvent(event)) { return; }
-    var code = event.code || KEYCODE_TO_CODE[event.keyCode];
+    code = event.code || KEYCODE_TO_CODE[event.keyCode];
     this.keys[code] = true;
   },
 
   onKeyUp: function (event) {
+    var code;
     if (!shouldCaptureKeyEvent(event)) { return; }
-    var code = event.code || KEYCODE_TO_CODE[event.keyCode];
+    code = event.code || KEYCODE_TO_CODE[event.keyCode];
     this.keys[code] = false;
-  },
-
-  getMovementVector: (function (delta) {
-    var direction = new THREE.Vector3(0, 0, 0);
-    var rotation = new THREE.Euler(0, 0, 0, 'YXZ');
-    return function (delta) {
-      var velocity = this.velocity;
-      var elRotation = this.el.getComputedAttribute('rotation');
-      direction.copy(velocity);
-      direction.multiplyScalar(delta);
-      if (!elRotation) { return direction; }
-      if (!this.data.fly) { elRotation.x = 0; }
-      rotation.set(THREE.Math.degToRad(elRotation.x),
-                   THREE.Math.degToRad(elRotation.y), 0);
-      direction.applyEuler(rotation);
-      return direction;
-    };
-  })()
+  }
 });
 
-},{"../constants":51,"../core/component":60,"../lib/three":104,"../utils/":122,"../utils/bind":116}],50:[function(_dereq_,module,exports){
+},{"../constants":52,"../core/component":61,"../lib/three":104,"../utils/":122}],51:[function(_dereq_,module,exports){
 /**
  * Animation configuration options for TWEEN.js animations.
  * Used by `<a-animation>`.
@@ -59850,14 +60261,15 @@ module.exports.easingFunctions = EASING_FUNCTIONS;
 module.exports.fills = FILLS;
 module.exports.repeats = REPEATS;
 
-},{"tween.js":18}],51:[function(_dereq_,module,exports){
+},{"tween.js":18}],52:[function(_dereq_,module,exports){
 module.exports = {
   AFRAME_INJECTED: 'aframe-injected',
+  DEFAULT_CAMERA_HEIGHT: 1.6,
   animation: _dereq_('./animation'),
   keyboardevent: _dereq_('./keyboardevent')
 };
 
-},{"./animation":50,"./keyboardevent":52}],52:[function(_dereq_,module,exports){
+},{"./animation":51,"./keyboardevent":53}],53:[function(_dereq_,module,exports){
 module.exports = {
   // Tiny KeyboardEvent.code polyfill.
   KEYCODE_TO_CODE: {
@@ -59872,7 +60284,7 @@ module.exports = {
   }
 };
 
-},{}],53:[function(_dereq_,module,exports){
+},{}],54:[function(_dereq_,module,exports){
 var ANode = _dereq_('./a-node');
 var animationConstants = _dereq_('../constants/animation');
 var coordinates = _dereq_('../utils/').coordinates;
@@ -60416,14 +60828,14 @@ function rgbVectorToHex (color) {
   }).join('');
 }
 
-},{"../constants/animation":50,"../lib/three":104,"../utils/":122,"./a-node":58,"./a-register-element":59,"./schema":67,"tween.js":18}],54:[function(_dereq_,module,exports){
+},{"../constants/animation":51,"../lib/three":104,"../utils/":122,"./a-node":59,"./a-register-element":60,"./schema":68,"tween.js":18}],55:[function(_dereq_,module,exports){
 var ANode = _dereq_('./a-node');
 var bind = _dereq_('../utils/bind');
 var debug = _dereq_('../utils/debug');
 var registerElement = _dereq_('./a-register-element').registerElement;
 var THREE = _dereq_('../lib/three');
 
-var xhrLoader = new THREE.XHRLoader();
+var fileLoader = new THREE.XHRLoader();
 var warn = debug('core:a-assets:warn');
 
 /**
@@ -60434,6 +60846,8 @@ module.exports = registerElement('a-assets', {
     createdCallback: {
       value: function () {
         this.isAssets = true;
+        this.fileLoader = fileLoader;
+        this.timeout = null;
       }
     },
 
@@ -60474,12 +60888,18 @@ module.exports = registerElement('a-assets', {
 
         // Timeout to start loading anyways.
         timeout = parseInt(this.getAttribute('timeout'), 10) || 3000;
-        setTimeout(function () {
+        this.timeout = setTimeout(function () {
           if (self.hasLoaded) { return; }
           warn('Asset loading timed out in ', timeout, 'ms');
           self.emit('timeout');
           self.load();
         }, timeout);
+      }
+    },
+
+    detachedCallback: {
+      value: function () {
+        if (this.timeout) { clearTimeout(this.timeout); }
       }
     },
 
@@ -60493,6 +60913,9 @@ module.exports = registerElement('a-assets', {
   })
 });
 
+/**
+ * Preload using XHRLoader for any type of asset.
+ */
 registerElement('a-asset-item', {
   prototype: Object.create(ANode.prototype, {
     createdCallback: {
@@ -60505,18 +60928,27 @@ registerElement('a-asset-item', {
     attachedCallback: {
       value: function () {
         var self = this;
-        var src = src = this.getAttribute('src');
-        xhrLoader.load(src, function (textResponse) {
+        var src = this.getAttribute('src');
+        fileLoader.load(src, function handleOnLoad (textResponse) {
           THREE.Cache.files[src] = textResponse;
           self.data = textResponse;
-          // Workaround for a Chrome bug.
-          // if another XMLHttpRequest is sent to the same url
-          // before the previous one closes. The second request never finishes.
-          // setTimeout finishes the first request and lets the logic
-          // triggered by load open subsequent requests.
-          // setTimeout can be removed once the fix for the bug below ships:
-          // https://bugs.chromium.org/p/chromium/issues/detail?id=633696&q=component%3ABlink%3ENetwork%3EXHR%20&colspec=ID%20Pri%20M%20Stars%20ReleaseBlock%20Component%20Status%20Owner%20Summary%20OS%20Modified
+          /*
+            Workaround for a Chrome bug. If another XHR is sent to the same url before the
+            previous one closes, the second request never finishes.
+            setTimeout finishes the first request and lets the logic triggered by load open
+            subsequent requests.
+            setTimeout can be removed once the fix for the bug below ships:
+            https://bugs.chromium.org/p/chromium/issues/detail?id=633696&q=component%3ABlink%3ENetwork%3EXHR%20&colspec=ID%20Pri%20M%20Stars%20ReleaseBlock%20Component%20Status%20Owner%20Summary%20OS%20Modified
+          */
           setTimeout(function load () { ANode.prototype.load.call(self); });
+        }, function handleOnProgress (xhr) {
+          self.emit('progress', {
+            loadedBytes: xhr.loaded,
+            totalBytes: xhr.total,
+            xhr: xhr
+          });
+        }, function handleOnError (xhr) {
+          self.emit('error', {xhr: xhr});
         });
       }
     }
@@ -60575,11 +61007,13 @@ function setCrossOrigin (mediaEl) {
 
   src = mediaEl.getAttribute('src');
 
-  // Does not have protocol.
-  if (src.indexOf('://') === -1) { return mediaEl; }
+  if (src !== null) {
+    // Does not have protocol.
+    if (src.indexOf('://') === -1) { return mediaEl; }
 
-  // Determine if cross origin is actually needed.
-  if (extractDomain(src) === window.location.host) { return mediaEl; }
+    // Determine if cross origin is actually needed.
+    if (extractDomain(src) === window.location.host) { return mediaEl; }
+  }
 
   warn('Cross-origin element was requested without `crossorigin` set. ' +
        'A-Frame will re-request the asset with `crossorigin` attribute set.', src);
@@ -60604,7 +61038,7 @@ function extractDomain (url) {
   return domain.split(':')[0];
 }
 
-},{"../lib/three":104,"../utils/bind":116,"../utils/debug":119,"./a-node":58,"./a-register-element":59}],55:[function(_dereq_,module,exports){
+},{"../lib/three":104,"../utils/bind":116,"../utils/debug":118,"./a-node":59,"./a-register-element":60}],56:[function(_dereq_,module,exports){
 /* global HTMLElement */
 var debug = _dereq_('../utils/debug');
 var registerElement = _dereq_('./a-register-element').registerElement;
@@ -60655,17 +61089,18 @@ module.exports = registerElement('a-cubemap', {
   })
 });
 
-},{"../utils/debug":119,"./a-register-element":59}],56:[function(_dereq_,module,exports){
+},{"../utils/debug":118,"./a-register-element":60}],57:[function(_dereq_,module,exports){
 /* global HTMLElement */
 var ANode = _dereq_('./a-node');
-var components = _dereq_('./component').components;
+var COMPONENTS = _dereq_('./component').components;
 var registerElement = _dereq_('./a-register-element').registerElement;
 var THREE = _dereq_('../lib/three');
 var utils = _dereq_('../utils/');
-var bind = utils.bind;
 
 var AEntity;
+var bind = utils.bind;
 var debug = utils.debug('core:a-entity:debug');
+var warn = utils.debug('core:a-entity:warn');
 
 var MULTIPLE_COMPONENT_DELIMITER = '__';
 
@@ -60760,7 +61195,8 @@ var proto = Object.create(ANode.prototype, {
       if (!this.parentEl || this.isScene) { return; }
       // Remove components.
       Object.keys(this.components).forEach(bind(this.removeComponent, this));
-      this.parentEl.remove(this);
+      this.removeFromParent();
+      ANode.prototype.detachedCallback.call(this);
     }
   },
 
@@ -60773,7 +61209,7 @@ var proto = Object.create(ANode.prototype, {
         this.updateComponents();
         return;
       }
-      this.updateComponent(attrName, this.getAttribute(attrName));
+      this.updateComponent(attrName, this.getDOMAttribute(attrName));
     }
   },
 
@@ -60894,6 +61330,19 @@ var proto = Object.create(ANode.prototype, {
     }
   },
 
+  /**
+   * Tell parentNode to remove this entity from itself.
+   */
+  removeFromParent: {
+    value: function () {
+      var parentEl = this.parentEl;
+      this.parentEl.remove(this);
+      this.attachedToParent = false;
+      this.parentEl = this.parentNode = null;
+      parentEl.emit('child-detached', {el: this});
+    }
+  },
+
   load: {
     value: function () {
       var self = this;
@@ -60955,7 +61404,7 @@ var proto = Object.create(ANode.prototype, {
       var componentName = componentInfo[0];
       var isComponentDefined = checkComponentDefined(this, attrName) || data !== undefined;
       // Check if component is registered and whether component should be initialized.
-      if (!components[componentName] ||
+      if (!COMPONENTS[componentName] ||
           (!isComponentDefined && !isDependency) ||
           // If component already initialized.
           (attrName in this.components)) {
@@ -60966,12 +61415,12 @@ var proto = Object.create(ANode.prototype, {
       this.initComponentDependencies(componentName);
 
       // If component name has an id we check component type multiplic
-      if (componentId && !components[componentName].multiple) {
+      if (componentId && !COMPONENTS[componentName].multiple) {
         throw new Error('Trying to initialize multiple ' +
                         'components of type `' + componentName +
                         '`. There can only be one component of this type per entity.');
       }
-      component = this.components[attrName] = new components[componentName].Component(
+      component = this.components[attrName] = new COMPONENTS[componentName].Component(
         this, data, componentId);
       if (this.isPlaying) { component.play(); }
 
@@ -60989,31 +61438,55 @@ var proto = Object.create(ANode.prototype, {
     writable: window.debug
   },
 
+  /**
+   * Initialize dependencies of a component.
+   *
+   * @param {string} name - Root component name.
+   */
   initComponentDependencies: {
     value: function (name) {
       var self = this;
-      var component = components[name];
+      var component = COMPONENTS[name];
       var dependencies;
+
+      // Not a component.
       if (!component) { return; }
-      dependencies = components[name].dependencies;
+
+      // No dependencies.
+      dependencies = COMPONENTS[name].dependencies;
       if (!dependencies) { return; }
-      dependencies.forEach(function (component) {
-        self.initComponent(component, undefined, true);
+
+      // Initialize dependencies.
+      dependencies.forEach(function initializeDependency (componentName) {
+        // Call getAttribute to initialize the data from the DOM.
+        self.initComponent(
+          componentName,
+          HTMLElement.prototype.getAttribute.call(self, componentName) || undefined,
+          true
+        );
       });
     }
   },
 
   removeComponent: {
     value: function (name) {
-      var component = this.components[name];
-      var isDefault = name in this.defaultComponents;
-      var isMixedIn = isComponentMixedIn(name, this.mixinEls);
-      // Don't remove default or mixed in components
+      var component;
+      var isDefault;
+      var isMixedIn;
+
+      // Don't remove default or mixed-in components.
+      isDefault = name in this.defaultComponents;
+      isMixedIn = isComponentMixedIn(name, this.mixinEls);
       if (isDefault || isMixedIn) { return; }
+
+      component = this.components[name];
       component.pause();
       component.remove();
       delete this.components[name];
-      this.emit('componentremoved', { name: name });
+      this.emit('componentremoved', {
+        id: component.id,
+        name: name
+      });
     }
   },
 
@@ -61049,7 +61522,7 @@ var proto = Object.create(ANode.prototype, {
        */
       function addComponent (key) {
         var name = key.split(MULTIPLE_COMPONENT_DELIMITER)[0];
-        if (!components[name]) { return; }
+        if (!COMPONENTS[name]) { return; }
         elComponents[key] = true;
       }
 
@@ -61057,7 +61530,7 @@ var proto = Object.create(ANode.prototype, {
        * Update component with given name.
        */
       function updateComponent (name) {
-        var attrValue = self.getAttribute(name);
+        var attrValue = self.getDOMAttribute(name);
         delete elComponents[name];
         self.updateComponent(name, attrValue);
       }
@@ -61191,7 +61664,7 @@ var proto = Object.create(ANode.prototype, {
    */
   setEntityAttribute: {
     value: function (attr, oldVal, newVal) {
-      if (components[attr] || this.components[attr]) {
+      if (COMPONENTS[attr] || this.components[attr]) {
         this.updateComponent(attr, newVal);
         return;
       }
@@ -61229,16 +61702,19 @@ var proto = Object.create(ANode.prototype, {
    */
   setAttribute: {
     value: function (attr, value, componentPropValue) {
+      var componentName;
       var isDebugMode = this.sceneEl && this.sceneEl.getAttribute('debug');
-      var componentName = attr.split(MULTIPLE_COMPONENT_DELIMITER)[0];
-      if (components[componentName]) {
-        // Just update one of the component properties
+
+      componentName = attr.split(MULTIPLE_COMPONENT_DELIMITER)[0];
+      if (COMPONENTS[componentName]) {
+        // Just update one of the component properties.
         if (typeof value === 'string' && componentPropValue !== undefined) {
           this.updateComponentProperty(attr, value, componentPropValue);
         } else {
           this.updateComponent(attr, value);
         }
-        // On debug mode we write the component state to the DOM attributes
+
+        // In debug mode, write component data up to the DOM.
         if (isDebugMode) { this.components[attr].flushToDOM(); }
         return;
       }
@@ -61250,24 +61726,63 @@ var proto = Object.create(ANode.prototype, {
   },
 
   /**
-   * To make the DOM attributes reflect the state of the components.
+   * Reflect component data in the DOM (as seen from the browser DOM Inspector).
    *
-   * @param {bool} recursive - Call updateDOM on the children
+   * @param {bool} recursive - Also flushToDOM on the children.
    **/
   flushToDOM: {
     value: function (recursive) {
       var components = this.components;
-      var children = this.children;
+      var defaultComponents = this.defaultComponents;
       var child;
+      var children = this.children;
       var i;
-      Object.keys(components).forEach(updateDOMAtrribute);
+
+      // Flush entity's components to DOM.
+      Object.keys(components).forEach(function flushComponent (componentName) {
+        components[componentName].flushToDOM(componentName in defaultComponents);
+      });
+
+      // Recurse.
       if (!recursive) { return; }
       for (i = 0; i < children.length; ++i) {
         child = children[i];
         if (!child.flushToDOM) { continue; }
         child.flushToDOM(recursive);
       }
-      function updateDOMAtrribute (name) { components[name].flushToDOM(); }
+    }
+  },
+
+  /**
+   * If `attr` is a component, returns ALL component data including applied mixins and
+   * defaults.
+   *
+   * If `attr` is not a component, fall back to HTML getAttribute.
+   *
+   * @param {string} attr
+   * @returns {object|string} Object if component, else string.
+   */
+  getAttribute: {
+    value: function (attr) {
+      // If component, return component data.
+      var component = this.components[attr];
+      if (component) { return component.getData(); }
+      return HTMLElement.prototype.getAttribute.call(this, attr);
+    },
+    writable: window.debug
+  },
+
+  /**
+   * `getAttribute` used to be `getDOMAttribute` and `getComputedAttribute` used to be
+   * what `getAttribute` is now. Now legacy code.
+   *
+   * @param {string} attr
+   * @returns {object|string} Object if component, else string.
+   */
+  getComputedAttribute: {
+    value: function (attr) {
+      warn('`getComputedAttribute` is deprecated. Use `getAttribute` instead.');
+      return this.getAttribute(attr);
     }
   },
 
@@ -61281,7 +61796,7 @@ var proto = Object.create(ANode.prototype, {
    * @param {string} attr
    * @returns {object|string} Object if component, else string.
    */
-  getAttribute: {
+  getDOMAttribute: {
     value: function (attr) {
       // If cached value exists, return partial component data.
       var component = this.components[attr];
@@ -61289,24 +61804,6 @@ var proto = Object.create(ANode.prototype, {
       return HTMLElement.prototype.getAttribute.call(this, attr);
     },
     writable: window.debug
-  },
-
-  /**
-   * If `attr` is a component, returns ALL component data including applied mixins and
-   * defaults.
-   *
-   * If `attr` is not a component, fall back to HTML getAttribute.
-   *
-   * @param {string} attr
-   * @returns {object|string} Object if component, else string.
-   */
-  getComputedAttribute: {
-    value: function (attr) {
-      // If component, return component data.
-      var component = this.components[attr];
-      if (component) { return component.getData(); }
-      return HTMLElement.prototype.getAttribute.call(this, attr);
-    }
   },
 
   addState: {
@@ -61389,7 +61886,7 @@ AEntity = registerElement('a-entity', {
 });
 module.exports = AEntity;
 
-},{"../lib/three":104,"../utils/":122,"./a-node":58,"./a-register-element":59,"./component":60}],57:[function(_dereq_,module,exports){
+},{"../lib/three":104,"../utils/":122,"./a-node":59,"./a-register-element":60,"./component":61}],58:[function(_dereq_,module,exports){
 /* global HTMLElement */
 var ANode = _dereq_('./a-node');
 var registerElement = _dereq_('./a-register-element').registerElement;
@@ -61416,7 +61913,7 @@ module.exports = registerElement('a-mixin', {
 
     attachedCallback: {
       value: function () {
-        this.sceneEl = this.closest('a-scene');
+        this.sceneEl = this.closestScene();
         this.cacheAttributes();
         this.updateEntities();
         this.load();
@@ -61494,7 +61991,7 @@ module.exports = registerElement('a-mixin', {
   })
 });
 
-},{"./a-node":58,"./a-register-element":59,"./component":60}],58:[function(_dereq_,module,exports){
+},{"./a-node":59,"./a-register-element":60,"./component":61}],59:[function(_dereq_,module,exports){
 /* global HTMLElement, MutationObserver */
 var registerElement = _dereq_('./a-register-element').registerElement;
 var utils = _dereq_('../utils/');
@@ -61520,9 +62017,13 @@ module.exports = registerElement('a-node', {
 
     attachedCallback: {
       value: function () {
-        var mixins = this.getAttribute('mixin');
+        var mixins;
+
+        this.hasLoaded = false;
         this.sceneEl = this.closestScene();
         this.emit('nodeready', {}, false);
+
+        mixins = this.getAttribute('mixin');
         if (mixins) { this.updateMixins(mixins); }
       },
       writable: window.debug
@@ -61569,7 +62070,9 @@ module.exports = registerElement('a-node', {
     },
 
     detachedCallback: {
-      value: function () { /* no-op */ }
+      value: function () {
+        this.hasLoaded = false;
+      }
     },
 
     /**
@@ -61730,7 +62233,7 @@ module.exports = registerElement('a-node', {
   })
 });
 
-},{"../utils/":122,"./a-register-element":59}],59:[function(_dereq_,module,exports){
+},{"../utils/":122,"./a-register-element":60}],60:[function(_dereq_,module,exports){
 /*
   ------------------------------------------------------------
   ------------- WARNING WARNING WARNING WARNING --------------
@@ -61907,7 +62410,7 @@ function copyProperties (source, destination) {
 ANode = _dereq_('./a-node');
 AEntity = _dereq_('./a-entity');
 
-},{"./a-entity":56,"./a-node":58,"document-register-element":8}],60:[function(_dereq_,module,exports){
+},{"./a-entity":57,"./a-node":59,"document-register-element":8}],61:[function(_dereq_,module,exports){
 /* global HTMLElement */
 var schema = _dereq_('./schema');
 var systems = _dereq_('./system');
@@ -61947,7 +62450,7 @@ Component.prototype = {
    * Contains the type schema and defaults for the data values.
    * Data is coerced into the types of the values of the defaults.
    */
-  schema: { },
+  schema: {},
 
   /**
    * Init handler. Similar to attachedCallback.
@@ -62076,12 +62579,16 @@ Component.prototype = {
   },
 
   /**
-   * Writes cached attribute data to the entity DOM element.
+   * Write cached attribute data to the entity DOM element.
+   *
+   * @param {bool} isDefault - Whether component is a default component. Always flush for
+   *   default components.
    */
-  flushToDOM: function () {
-    var attrValue = this.attrValue;
+  flushToDOM: function (isDefault) {
+    var attrValue = isDefault ? this.data : this.attrValue;
     if (!attrValue) { return; }
-    HTMLElement.prototype.setAttribute.call(this.el, this.attrName, this.stringify(attrValue));
+    HTMLElement.prototype.setAttribute.call(this.el, this.attrName,
+                                            this.stringify(attrValue));
   },
 
   /**
@@ -62111,16 +62618,20 @@ Component.prototype = {
       // Play the component if the entity is playing.
       this.update(oldData);
       if (el.isPlaying) { this.play(); }
+      el.emit('componentinitialized', {
+        id: this.id,
+        name: this.name,
+        data: this.getData()
+      }, false);
     } else {
       this.update(oldData);
+      el.emit('componentchanged', {
+        id: this.id,
+        name: this.name,
+        newData: this.getData(),
+        oldData: oldData
+      }, false);
     }
-
-    el.emit('componentchanged', {
-      id: this.id,
-      name: this.name,
-      newData: this.getData(),
-      oldData: oldData
-    }, false);
   },
 
   /**
@@ -62307,7 +62818,7 @@ function wrapPlay (playMethod) {
   };
 }
 
-},{"../utils/":122,"./schema":67,"./system":69}],61:[function(_dereq_,module,exports){
+},{"../utils/":122,"./schema":68,"./system":70}],62:[function(_dereq_,module,exports){
 var schema = _dereq_('./schema');
 
 var processSchema = schema.process;
@@ -62381,7 +62892,7 @@ module.exports.registerGeometry = function (name, definition) {
   return NewGeometry;
 };
 
-},{"../lib/three":104,"./schema":67}],62:[function(_dereq_,module,exports){
+},{"../lib/three":104,"./schema":68}],63:[function(_dereq_,module,exports){
 var coordinates = _dereq_('../utils/coordinates');
 var debug = _dereq_('debug');
 
@@ -62391,11 +62902,15 @@ var warn = debug('core:propertyTypes:warn');
 var propertyTypes = module.exports.propertyTypes = {};
 
 // Built-in property types.
+registerPropertyType('audio', '', assetParse);
 registerPropertyType('array', [], arrayParse, arrayStringify);
+registerPropertyType('asset', '', assetParse);
 registerPropertyType('boolean', false, boolParse);
 registerPropertyType('color', '#FFF', defaultParse, defaultStringify);
 registerPropertyType('int', 0, intParse);
 registerPropertyType('number', 0, numberParse);
+registerPropertyType('map', '', assetParse);
+registerPropertyType('model', '', assetParse);
 registerPropertyType('selector', '', selectorParse, selectorStringify);
 registerPropertyType('selectorAll', '', selectorAllParse, selectorAllStringify);
 registerPropertyType('src', '', srcParse);
@@ -62438,6 +62953,29 @@ function arrayParse (value) {
 
 function arrayStringify (value) {
   return value.join(', ');
+}
+
+/**
+ * `src` parser for assets.
+ *
+ * @param {string} value - Can either be `url(<value>)` or a selector to an asset.
+ * @returns {string|Element} Parsed value from `url(<value>)`, src from `<someasset src>`, or
+ *   canvas.
+ */
+function assetParse (value) {
+  var el;
+  var parsedUrl = value.match(/\url\((.+)\)/);
+
+  if (parsedUrl) { return parsedUrl[1]; }
+
+  el = selectorParse(value);
+  if (!el) { return ''; }
+
+  if (el.tagName === 'CANVAS') {
+    return el;
+  } else {
+    return el.getAttribute('src');
+  }
 }
 
 function defaultParse (value) {
@@ -62489,32 +63027,16 @@ function selectorAllStringify (value) {
   return defaultStringify(value);
 }
 
-/**
- * `src` parser for assets.
- *
- * @param {string} value - Can either be `url(<value>)` or a selector to an asset.
- * @returns {string} Parsed value from `url(<value>)` or src from `<someasset src>`.
- */
 function srcParse (value) {
-  var parsedUrl = value.match(/\url\((.+)\)/);
-  if (parsedUrl) { return parsedUrl[1]; }
-
-  var el = selectorParse(value);
-  if (el) { return el.getAttribute('src'); }
-
-  if (value.charAt(0) !== '#') {
-    warn('"' + value + '" is not a valid `src` attribute. ' +
-         'Value must be an ID selector (i.e. "#someElement") or wrapped in `url()`.');
-  }
-
-  return '';
+  warn('`src` property type is deprecated. Use `asset` instead.');
+  return assetParse(value);
 }
 
 function vecParse (value) {
   return coordinates.parse(value, this.default);
 }
 
-},{"../utils/coordinates":118,"debug":3}],63:[function(_dereq_,module,exports){
+},{"../utils/coordinates":117,"debug":3}],64:[function(_dereq_,module,exports){
 /* global Promise, screen */
 var initMetaTags = _dereq_('./metaTags').inject;
 var initWakelock = _dereq_('./wakelock');
@@ -62529,10 +63051,11 @@ var ANode = _dereq_('../a-node');
 var initPostMessageAPI = _dereq_('./postMessage');
 
 var bind = utils.bind;
-var checkHeadsetConnected = utils.checkHeadsetConnected;
+var checkHeadsetConnected = utils.device.checkHeadsetConnected;
+var isIOS = utils.device.isIOS();
+var isMobile = utils.device.isMobile();
 var registerElement = re.registerElement;
-var isIOS = utils.isIOS();
-var isMobile = utils.isMobile();
+var warn = utils.debug('core:a-scene:warn');
 
 /**
  * Scene element, holds all entities.
@@ -62558,6 +63081,7 @@ module.exports = registerElement('a-scene', {
         'canvas': '',
         'inspector': '',
         'keyboard-shortcuts': '',
+        'screenshot': '',
         'vr-mode-ui': ''
       }
     },
@@ -62742,14 +63266,25 @@ module.exports = registerElement('a-scene', {
     },
 
     /**
-     * Wraps Entity.getComputedAttribute to take into account for systems.
-     * If system exists, then return system data rather than possible component data.
+     * `getAttribute` used to be `getDOMAttribute` and `getComputedAttribute` used to be
+     * what `getAttribute` is now. Now legacy code.
      */
     getComputedAttribute: {
       value: function (attr) {
+        warn('`getComputedAttribute` is deprecated. Use `getAttribute` instead.');
+        this.getAttribute(attr);
+      }
+    },
+
+    /**
+     * Wraps Entity.getDOMAttribute to take into account for systems.
+     * If system exists, then return system data rather than possible component data.
+     */
+    getDOMAttribute: {
+      value: function (attr) {
         var system = this.systems[attr];
         if (system) { return system.data; }
-        return AEntity.prototype.getComputedAttribute.call(this, attr);
+        return AEntity.prototype.getDOMAttribute.call(this, attr);
       }
     },
 
@@ -62919,13 +63454,14 @@ module.exports = registerElement('a-scene', {
      */
     render: {
       value: function (time) {
+        var effect = this.effect;
         var timeDelta = time - this.time;
 
         if (this.isPlaying) { this.tick(time, timeDelta); }
-        this.effect.render(this.object3D, this.camera);
 
+        this.animationFrameID = effect.requestAnimationFrame(this.render);
+        effect.render(this.object3D, this.camera);
         this.time = time;
-        this.animationFrameID = window.requestAnimationFrame(this.render);
       },
       writable: true
     }
@@ -62955,13 +63491,14 @@ function getCanvasSize (canvasEl, embedded) {
 
 function requestFullscreen (canvas) {
   var requestFullscreen =
-    canvas.requestFullScreen ||
-    canvas.webkitRequestFullScreen ||
-    canvas.mozRequestFullScreen;
+    canvas.requestFullscreen ||
+    canvas.webkitRequestFullscreen ||
+    canvas.mozRequestFullScreen ||  // The capitalized `S` is not a typo.
+    canvas.msRequestFullscreen;
   requestFullscreen.apply(canvas);
 }
 
-},{"../../lib/three":104,"../../utils/":122,"../a-entity":56,"../a-node":58,"../a-register-element":59,"../system":69,"./metaTags":64,"./postMessage":65,"./wakelock":66,"tween.js":18}],64:[function(_dereq_,module,exports){
+},{"../../lib/three":104,"../../utils/":122,"../a-entity":57,"../a-node":59,"../a-register-element":60,"../system":70,"./metaTags":65,"./postMessage":66,"./wakelock":67,"tween.js":18}],65:[function(_dereq_,module,exports){
 var constants = _dereq_('../../constants/');
 var extend = _dereq_('../../utils').extend;
 
@@ -63042,7 +63579,7 @@ function createTag (tagObj) {
   return extend(meta, tagObj.attributes);
 }
 
-},{"../../constants/":51,"../../utils":122}],65:[function(_dereq_,module,exports){
+},{"../../constants/":52,"../../utils":122}],66:[function(_dereq_,module,exports){
 var bind = _dereq_('../../utils/bind');
 var isIframed = _dereq_('../../utils/').isIframed;
 
@@ -63075,7 +63612,7 @@ function postMessageAPIHandler (event) {
   }
 }
 
-},{"../../utils/":122,"../../utils/bind":116}],66:[function(_dereq_,module,exports){
+},{"../../utils/":122,"../../utils/bind":116}],67:[function(_dereq_,module,exports){
 var Wakelock = _dereq_('../../../vendor/wakelock/wakelock');
 
 module.exports = function initWakelock (scene) {
@@ -63086,7 +63623,7 @@ module.exports = function initWakelock (scene) {
   scene.addEventListener('exit-vr', function () { wakelock.release(); });
 };
 
-},{"../../../vendor/wakelock/wakelock":131}],67:[function(_dereq_,module,exports){
+},{"../../../vendor/wakelock/wakelock":131}],68:[function(_dereq_,module,exports){
 var debug = _dereq_('../utils/debug');
 var propertyTypes = _dereq_('./propertyTypes').propertyTypes;
 var warn = debug('core:schema:warn');
@@ -63208,8 +63745,12 @@ module.exports.parseProperties = function (propData, schema, getPartialData, com
  * Deserialize a single property.
  */
 function parseProperty (value, propDefinition) {
-  value = (value === undefined || value === null) ? propDefinition.default : value;
-  return propDefinition.parse(value);
+  // Use default value if value is falsy.
+  if (value === undefined || value === null || value === '') {
+    value = propDefinition.default;
+  }
+  // Invoke property type parser.
+  return propDefinition.parse(value, propDefinition.default);
 }
 module.exports.parseProperty = parseProperty;
 
@@ -63242,7 +63783,7 @@ function stringifyProperty (value, propDefinition) {
 }
 module.exports.stringifyProperty = stringifyProperty;
 
-},{"../utils/debug":119,"./propertyTypes":62}],68:[function(_dereq_,module,exports){
+},{"../utils/debug":118,"./propertyTypes":63}],69:[function(_dereq_,module,exports){
 var schema = _dereq_('./schema');
 
 var processSchema = schema.process;
@@ -63250,13 +63791,17 @@ var shaders = module.exports.shaders = {};  // Keep track of registered shaders.
 var shaderNames = module.exports.shaderNames = [];  // Keep track of the names of registered shaders.
 var THREE = _dereq_('../lib/three');
 
+// A-Frame properties to three.js uniform types.
 var propertyToThreeMapping = {
+  array: 'v3',
+  color: 'v3',
+  int: 'i',
   number: 'f',
+  map: 't',
   time: 'f',
-  vec4: 'v4',
-  vec3: 'v3',
   vec2: 'v2',
-  color: 'v3'
+  vec3: 'v3',
+  vec4: 'v4'
 };
 
 /**
@@ -63273,7 +63818,7 @@ Shader.prototype = {
    * Contains the type schema and defaults for the data values.
    * Data is coerced into the types of the values of the defaults.
    */
-  schema: { },
+  schema: {},
 
   vertexShader:
     'void main() {' +
@@ -63401,7 +63946,7 @@ module.exports.registerShader = function (name, definition) {
   return NewShader;
 };
 
-},{"../lib/three":104,"./schema":67}],69:[function(_dereq_,module,exports){
+},{"../lib/three":104,"./schema":68}],70:[function(_dereq_,module,exports){
 /* global HTMLElement */
 var components = _dereq_('./component');
 var schema = _dereq_('./schema');
@@ -63518,10 +64063,10 @@ module.exports.registerSystem = function (name, definition) {
   for (i = 0; i < scenes.length; i++) { scenes[i].initSystem(name); }
 };
 
-},{"../utils/":122,"./component":60,"./schema":67}],70:[function(_dereq_,module,exports){
+},{"../utils/":122,"./component":61,"./schema":68}],71:[function(_dereq_,module,exports){
 _dereq_('./pivot');
 
-},{"./pivot":71}],71:[function(_dereq_,module,exports){
+},{"./pivot":72}],72:[function(_dereq_,module,exports){
 var registerComponent = _dereq_('../../core/component').registerComponent;
 var THREE = _dereq_('../../lib/three');
 
@@ -63570,119 +64115,14 @@ registerComponent('pivot', {
   }
 });
 
-},{"../../core/component":60,"../../lib/three":104}],72:[function(_dereq_,module,exports){
-var ANode = _dereq_('../../core/a-node');
-var registerElement = _dereq_('../../core/a-register-element').registerElement;
-var utils = _dereq_('../../utils/');
-
-var setComponentProperty = utils.entity.setComponentProperty;
-
-/**
- * Declarative events to help register event listeners that set attributes on other entities.
- * A convenience layer and helper for those that might not know Javascript.
- *
- * Note that the event that <a-event> registers is not delegated as this helper is mainly
- * for those that do not know Javascript and writing raw markup. In which case, delegated
- * events are not needed. Also helps reduce scope of this helper and encourages people to
- * learn to register their own event handlers.
- *
- * @member {string} name - Event name.
- * @member {array} targetEls - Elements to modify on event. Defaults to parent element.
- */
-module.exports = registerElement('a-event', {
-  prototype: Object.create(ANode.prototype, {
-    createdCallback: {
-      value: function () {
-        this.el = null;
-        this.isAEvent = true;
-        this.name = '';
-        this.targetEls = [];
-      }
-    },
-
-    attachedCallback: {
-      value: function () {
-        var targetSelector = this.getAttribute('target');
-        this.el = this.parentNode;
-        this.name = this.getAttribute('name') || this.getAttribute('type');
-
-        console.log(
-          '<a-event> has been DEPRECATED. ' +
-          'Use https://github.com/ngokevin/aframe-event-set-component instead.');
-
-        if (targetSelector) {
-          this.targetEls = this.el.sceneEl.querySelectorAll(targetSelector);
-        } else {
-          this.targetEls = [this.el];
-        }
-
-        if (this.deprecated) {
-          console.warn(
-            '<' + this.tagName.toLowerCase() + '>' +
-            ' has been DEPRECATED. Use <a-event name="' + this.name + '">' +
-            ' instead.'
-          );
-        }
-
-        // Deprecate `type` for `name`.
-        if (this.hasAttribute('type')) {
-          console.log(
-            '<a-event type> has been DEPRECATED. Use <a-event name> instead.'
-          );
-        }
-
-        this.listener = this.attachEventListener();
-        this.load();
-      }
-    },
-
-    detachedCallback: {
-      value: function () {
-        var listener = this.listener;
-        if (!listener) { return; }
-        this.removeEventListener(this.name, listener);
-      }
-    },
-
-    attachEventListener: {
-      value: function () {
-        var attributes = this.attributes;
-        var el = this.el;
-        var name = this.name;
-        var targetEls = this.targetEls;
-
-        return el.addEventListener(name, function () {
-          var attribute;
-          var attributeName;
-          var attributeValue;
-          var targetEl;
-
-          for (var i = 0; i < targetEls.length; i++) {
-            for (var j = 0; j < attributes.length; j++) {
-              attribute = attributes[j];
-              attributeName = attribute.name;
-              attributeValue = attribute.value;
-              targetEl = targetEls[i];
-
-              // target is a keyword for <a-event>.
-              if (attributeName === 'target') { continue; }
-              setComponentProperty(targetEl, attributeName, attributeValue);
-            }
-          }
-        });
-      }
-    }
-  })
-});
-
-},{"../../core/a-node":58,"../../core/a-register-element":59,"../../utils/":122}],73:[function(_dereq_,module,exports){
+},{"../../core/component":61,"../../lib/three":104}],73:[function(_dereq_,module,exports){
 /**
  * Common mesh defaults, mappings, and transforms.
  */
 module.exports = function getMeshMixin () {
   return {
     defaultComponents: {
-      material: { }
+      material: {}
     },
 
     mappings: {
@@ -63809,7 +64249,7 @@ module.exports.registerPrimitive = function registerPrimitive (name, definition)
             // Set component properties individually to not overwrite user-defined components.
             if (componentData instanceof Object) {
               var component = components[componentName];
-              var attrValues = self.getAttribute(componentName) || {};
+              var attrValues = self.getDOMAttribute(componentName) || {};
               var data = component.parse(attrValues);
 
               // Check if component property already defined.
@@ -63865,13 +64305,14 @@ module.exports.registerPrimitive = function registerPrimitive (name, definition)
   return primitive;
 };
 
-},{"../../core/a-entity":56,"../../core/a-register-element":59,"../../core/component":60,"../../utils/":122}],76:[function(_dereq_,module,exports){
+},{"../../core/a-entity":57,"../../core/a-register-element":60,"../../core/component":61,"../../utils/":122}],76:[function(_dereq_,module,exports){
+var DEFAULT_CAMERA_HEIGHT = _dereq_('../../../constants/').DEFAULT_CAMERA_HEIGHT;
 var registerPrimitive = _dereq_('../primitives').registerPrimitive;
 
 registerPrimitive('a-camera', {
   defaultComponents: {
     camera: {
-      userHeight: 1.6
+      userHeight: DEFAULT_CAMERA_HEIGHT
     },
     'look-controls': {},
     'wasd-controls': {}
@@ -63884,6 +64325,7 @@ registerPrimitive('a-camera', {
     'look-controls-enabled': 'look-controls.enabled',
     near: 'camera.near',
     'wasd-controls-enabled': 'wasd-controls.enabled',
+    'reverse-mouse-drag': 'look-controls.reverseMouseDrag',
     'user-height': 'camera.userHeight',
     zoom: 'camera.zoom'
   },
@@ -63898,7 +64340,7 @@ registerPrimitive('a-camera', {
   }
 });
 
-},{"../primitives":75}],77:[function(_dereq_,module,exports){
+},{"../../../constants/":52,"../primitives":75}],77:[function(_dereq_,module,exports){
 var getMeshMixin = _dereq_('../getMeshMixin');
 var registerPrimitive = _dereq_('../primitives').registerPrimitive;
 var utils = _dereq_('../../../utils/');
@@ -64180,7 +64622,7 @@ function unCamelCase (str) {
   return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-},{"../../../core/geometry":61,"../../../utils/":122,"../getMeshMixin":73,"../primitives":75}],88:[function(_dereq_,module,exports){
+},{"../../../core/geometry":62,"../../../utils/":122,"../getMeshMixin":73,"../primitives":75}],88:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64199,7 +64641,7 @@ registerGeometry('box', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],89:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],89:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64219,7 +64661,7 @@ registerGeometry('circle', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],90:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],90:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64245,7 +64687,7 @@ registerGeometry('cone', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],91:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],91:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64269,7 +64711,7 @@ registerGeometry('cylinder', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],92:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],92:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64284,7 +64726,7 @@ registerGeometry('dodecahedron', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],93:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],93:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64299,7 +64741,7 @@ registerGeometry('icosahedron', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],94:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],94:[function(_dereq_,module,exports){
 _dereq_('./box.js');
 _dereq_('./circle.js');
 _dereq_('./cone.js');
@@ -64329,7 +64771,7 @@ registerGeometry('octahedron', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],96:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],96:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64346,7 +64788,7 @@ registerGeometry('plane', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],97:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],97:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64356,7 +64798,7 @@ registerGeometry('ring', {
   schema: {
     radiusInner: {default: 0.8, min: 0},
     radiusOuter: {default: 1.2, min: 0},
-    segmentsPhi: { default: 10, min: 1, type: 'int' },
+    segmentsPhi: {default: 10, min: 1, type: 'int'},
     segmentsTheta: {default: 32, min: 3, type: 'int'},
     thetaLength: {default: 360, min: 0},
     thetaStart: {default: 0}
@@ -64369,7 +64811,7 @@ registerGeometry('ring', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],98:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],98:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64393,7 +64835,7 @@ registerGeometry('sphere', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],99:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],99:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64408,7 +64850,7 @@ registerGeometry('tetrahedron', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],100:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],100:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64430,7 +64872,7 @@ registerGeometry('torus', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],101:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],101:[function(_dereq_,module,exports){
 var registerGeometry = _dereq_('../core/geometry').registerGeometry;
 var THREE = _dereq_('../lib/three');
 
@@ -64451,7 +64893,16 @@ registerGeometry('torusKnot', {
   }
 });
 
-},{"../core/geometry":61,"../lib/three":104}],102:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../lib/three":104}],102:[function(_dereq_,module,exports){
+var debug = _dereq_('./utils/debug');
+var error = debug('A-Frame:warn');
+var info = debug('A-Frame:info');
+
+if (document.currentScript && document.currentScript.parentNode !== document.head) {
+  error('Put the A-Frame <script> tag in the <head> of the HTML before <a-scene> to ensure everything for A-Frame is properly registered before they are used in the <body>.');
+  info('Also make sure that any component <script> tags are included after A-Frame, but still before <a-scene>.');
+}
+
 // Polyfill `Promise`.
 window.Promise = window.Promise || _dereq_('promise-polyfill');
 
@@ -64511,7 +64962,6 @@ _dereq_('./core/a-mixin');
 
 // Extras.
 _dereq_('./extras/components/');
-_dereq_('./extras/declarative-events/');
 _dereq_('./extras/primitives/');
 
 console.log('A-Frame Version:', pkg.version);
@@ -64519,6 +64969,7 @@ console.log('three Version:', pkg.dependencies['three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
 
 module.exports = window.AFRAME = {
+  AComponent: _dereq_('./core/component').Component,
   AEntity: AEntity,
   ANode: ANode,
   AScene: AScene,
@@ -64543,7 +64994,7 @@ module.exports = window.AFRAME = {
   version: pkg.version
 };
 
-},{"../package":20,"./components/index":27,"./core/a-animation":53,"./core/a-assets":54,"./core/a-cubemap":55,"./core/a-entity":56,"./core/a-mixin":57,"./core/a-node":58,"./core/a-register-element":59,"./core/component":60,"./core/geometry":61,"./core/scene/a-scene":63,"./core/schema":67,"./core/shader":68,"./core/system":69,"./extras/components/":70,"./extras/declarative-events/":72,"./extras/primitives/":74,"./extras/primitives/getMeshMixin":73,"./extras/primitives/primitives":75,"./geometries/index":94,"./lib/three":104,"./shaders/index":106,"./style/aframe.css":108,"./style/rStats.css":109,"./systems/index":112,"./utils/":122,"present":10,"promise-polyfill":11,"tween.js":18,"webvr-polyfill":19}],103:[function(_dereq_,module,exports){
+},{"../package":20,"./components/index":27,"./core/a-animation":54,"./core/a-assets":55,"./core/a-cubemap":56,"./core/a-entity":57,"./core/a-mixin":58,"./core/a-node":59,"./core/a-register-element":60,"./core/component":61,"./core/geometry":62,"./core/scene/a-scene":64,"./core/schema":68,"./core/shader":69,"./core/system":70,"./extras/components/":71,"./extras/primitives/":74,"./extras/primitives/getMeshMixin":73,"./extras/primitives/primitives":75,"./geometries/index":94,"./lib/three":104,"./shaders/index":106,"./style/aframe.css":108,"./style/rStats.css":109,"./systems/index":112,"./utils/":122,"./utils/debug":118,"present":10,"promise-polyfill":11,"tween.js":18,"webvr-polyfill":19}],103:[function(_dereq_,module,exports){
 window.aframeStats = function (scene) {
   var _rS = null;
   var _scene = scene;
@@ -64562,7 +65013,9 @@ window.aframeStats = function (scene) {
 
   function _update () {
     _rS('te').set(getEntityCount());
-    _rS('lt').set(window.performance.getEntriesByName('render-started')[0].startTime.toFixed(0));
+    if (window.performance.getEntriesByName) {
+      _rS('lt').set(window.performance.getEntriesByName('render-started')[0].startTime.toFixed(0));
+    }
   }
 
   function getEntityCount () {
@@ -64649,9 +65102,11 @@ module.exports.Component = registerShader('flat', {
     color: {type: 'color'},
     fog: {default: true},
     height: {default: 256},
-    repeat: {default: ''},
-    src: {default: ''},
-    width: {default: 512}
+    repeat: {type: 'vec2', default: {x: 1, y: 1}},
+    src: {type: 'map'},
+    width: {default: 512},
+    wireframe: {default: false},
+    wireframeLinewidth: {default: 2}
   },
 
   /**
@@ -64692,11 +65147,13 @@ module.exports.Component = registerShader('flat', {
 function getMaterialData (data) {
   return {
     fog: data.fog,
-    color: new THREE.Color(data.color)
+    color: new THREE.Color(data.color),
+    wireframe: data.wireframe,
+    wireframeLinewidth: data.wireframeLinewidth
   };
 }
 
-},{"../core/shader":68,"../lib/three":104,"../utils/":122}],106:[function(_dereq_,module,exports){
+},{"../core/shader":69,"../lib/three":104,"../utils/":122}],106:[function(_dereq_,module,exports){
 _dereq_('./flat');
 _dereq_('./standard');
 
@@ -64713,34 +65170,36 @@ var texturePromises = {};
  */
 module.exports.Component = registerShader('standard', {
   schema: {
-    ambientOcclusionMap: {default: ''},
+    ambientOcclusionMap: {type: 'map'},
     ambientOcclusionMapIntensity: {default: 1},
-    ambientOcclusionTextureOffset: {default: ''},
-    ambientOcclusionTextureRepeat: {default: ''},
+    ambientOcclusionTextureOffset: {type: 'vec2'},
+    ambientOcclusionTextureRepeat: {type: 'vec2', default: {x: 1, y: 1}},
 
     color: {type: 'color'},
 
-    displacementMap: {default: ''},
+    displacementMap: {type: 'map'},
     displacementScale: {default: 1},
     displacementBias: {default: 0.5},
-    displacementTextureOffset: {default: ''},
-    displacementTextureRepeat: {default: ''},
+    displacementTextureOffset: {type: 'vec2'},
+    displacementTextureRepeat: {type: 'vec2', default: {x: 1, y: 1}},
     envMap: {default: ''},
 
     fog: {default: true},
     height: {default: 256},
     metalness: {default: 0.0, min: 0.0, max: 1.0},
 
-    normalMap: {default: ''},
+    normalMap: {type: 'map'},
     normalScale: {type: 'vec2', default: '1 1'},
-    normalTextureOffset: {default: ''},
-    normalTextureRepeat: {default: ''},
+    normalTextureOffset: {type: 'vec2'},
+    normalTextureRepeat: {type: 'vec2', default: {x: 1, y: 1}},
 
-    repeat: {default: ''},
+    repeat: {type: 'vec2', default: {x: 1, y: 1}},
     roughness: {default: 0.5, min: 0.0, max: 1.0},
-    sphericalEnvMap: {default: ''},
-    src: {default: ''},
-    width: {default: 512}
+    sphericalEnvMap: {type: 'map'},
+    src: {type: 'map'},
+    width: {default: 512},
+    wireframe: {default: false},
+    wireframeLinewidth: {default: 2}
   },
 
   /**
@@ -64798,7 +65257,7 @@ module.exports.Component = registerShader('standard', {
 
     // if a spherical env map is defined then use it.
     if (sphericalEnvMap) {
-      this.el.sceneEl.systems.material.loadTexture(sphericalEnvMap, { src: sphericalEnvMap }, function textureLoaded (texture) {
+      this.el.sceneEl.systems.material.loadTexture(sphericalEnvMap, {src: sphericalEnvMap}, function textureLoaded (texture) {
         self.isLoadingEnvMap = false;
         texture.mapping = THREE.SphericalReflectionMapping;
         material.envMap = texture;
@@ -64845,7 +65304,9 @@ function getMaterialData (data) {
     color: new THREE.Color(data.color),
     fog: data.fog,
     metalness: data.metalness,
-    roughness: data.roughness
+    roughness: data.roughness,
+    wireframe: data.wireframe,
+    wireframeLinewidth: data.wireframeLinewidth
   };
 
   if (data.normalMap) { newData.normalScale = data.normalScale; }
@@ -64860,17 +65321,16 @@ function getMaterialData (data) {
   return newData;
 }
 
-},{"../core/shader":68,"../lib/three":104,"../utils/":122}],108:[function(_dereq_,module,exports){
-var css = ".a-html{bottom:0;left:0;position:fixed;right:0;top:0}.a-body{height:100%;margin:0;overflow:hidden;padding:0;width:100%}:-webkit-full-screen{background-color:transparent}.a-hidden{display:none!important}.a-canvas{height:100%;left:0;position:absolute;top:0;width:100%}.a-canvas.a-grab-cursor:hover{cursor:grab;cursor:-moz-grabbing;cursor:-webkit-grab}.a-canvas.a-grab-cursor:active,.a-grabbing{cursor:grabbing;cursor:-moz-grabbing;cursor:-webkit-grabbing}// Class is removed when doing <a-scene embedded>. .a-canvas.fullscreen{width:100%!important;height:100%!important;top:0!important;left:0!important;right:0!important;bottom:0!important;z-index:999999!important;position:fixed!important}a-scene{display:block;position:relative;height:100%;width:100%}a-assets,a-scene audio,a-scene img,a-scene video{display:none}.a-enter-vr-modal,.a-orientation-modal{font-family:Consolas,Andale Mono,Courier New,monospace}.a-enter-vr-modal a{border-bottom:1px solid #fff;padding:2px 0;text-decoration:none;transition:.1s color ease-in}.a-enter-vr-modal a:hover{background-color:#fff;color:#111;padding:2px 4px;position:relative;left:-4px}.a-enter-vr{font-family:sans-serif,monospace;font-size:13px;width:100%;font-weight:200;line-height:16px;height:10%;position:absolute;right:20px;bottom:20px}.a-enter-vr.embedded{right:5px;bottom:5px}.a-enter-vr-button,.a-enter-vr-modal,.a-enter-vr-modal a{color:#fff}.a-enter-vr-button{background:url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20245.82%20141.73%22%3E%3Cdefs%3E%3Cstyle%3E.a%7Bfill%3A%23fff%3Bfill-rule%3Aevenodd%3B%7D%3C%2Fstyle%3E%3C%2Fdefs%3E%3Ctitle%3Emask%3C%2Ftitle%3E%3Cpath%20class%3D%22a%22%20d%3D%22M175.56%2C111.37c-22.52%2C0-40.77-18.84-40.77-42.07S153%2C27.24%2C175.56%2C27.24s40.77%2C18.84%2C40.77%2C42.07S198.08%2C111.37%2C175.56%2C111.37ZM26.84%2C69.31c0-23.23%2C18.25-42.07%2C40.77-42.07s40.77%2C18.84%2C40.77%2C42.07-18.26%2C42.07-40.77%2C42.07S26.84%2C92.54%2C26.84%2C69.31ZM27.27%2C0C11.54%2C0%2C0%2C12.34%2C0%2C28.58V110.9c0%2C16.24%2C11.54%2C30.83%2C27.27%2C30.83H99.57c2.17%2C0%2C4.19-1.83%2C5.4-3.7L116.47%2C118a8%2C8%2C0%2C0%2C1%2C12.52-.18l11.51%2C20.34c1.2%2C1.86%2C3.22%2C3.61%2C5.39%2C3.61h72.29c15.74%2C0%2C27.63-14.6%2C27.63-30.83V28.58C245.82%2C12.34%2C233.93%2C0%2C218.19%2C0H27.27Z%22%2F%3E%3C%2Fsvg%3E) 50% 50%/70% 70% no-repeat rgba(0,0,0,.35);border:0;bottom:0;cursor:pointer;min-width:50px;min-height:30px;padding-right:5%;padding-top:4%;position:absolute;right:0;transition:background-color .05s ease;-webkit-transition:background-color .05s ease;z-index:9999}.a-enter-vr-button:active,.a-enter-vr-button:hover{background-color:#666}[data-a-enter-vr-no-webvr] .a-enter-vr-button{border-color:#666;opacity:.65}[data-a-enter-vr-no-webvr] .a-enter-vr-button:active,[data-a-enter-vr-no-webvr] .a-enter-vr-button:hover{background-color:rgba(0,0,0,.35);cursor:not-allowed}.a-enter-vr-modal{background-color:#666;border-radius:0;display:none;min-height:32px;margin-right:70px;padding:9px;width:280px;right:2%;position:absolute}.a-enter-vr-modal:after{border-bottom:10px solid transparent;border-left:10px solid #666;border-top:10px solid transparent;display:inline-block;content:'';position:absolute;right:-5px;top:5px;width:0;height:0}.a-enter-vr-modal a,.a-enter-vr-modal p{display:inline}.a-enter-vr-modal p{margin:0}.a-enter-vr-modal p:after{content:' '}[data-a-enter-vr-no-headset].a-enter-vr:hover .a-enter-vr-modal,[data-a-enter-vr-no-webvr].a-enter-vr:hover .a-enter-vr-modal{display:block}.a-orientation-modal{background:url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%20version%3D%221.1%22%20x%3D%220px%22%20y%3D%220px%22%20viewBox%3D%220%200%2090%2090%22%20enable-background%3D%22new%200%200%2090%2090%22%20xml%3Aspace%3D%22preserve%22%3E%3Cpolygon%20points%3D%220%2C0%200%2C0%200%2C0%20%22%3E%3C/polygon%3E%3Cg%3E%3Cpath%20d%3D%22M71.545%2C48.145h-31.98V20.743c0-2.627-2.138-4.765-4.765-4.765H18.456c-2.628%2C0-4.767%2C2.138-4.767%2C4.765v42.789%20%20%20c0%2C2.628%2C2.138%2C4.766%2C4.767%2C4.766h5.535v0.959c0%2C2.628%2C2.138%2C4.765%2C4.766%2C4.765h42.788c2.628%2C0%2C4.766-2.137%2C4.766-4.765V52.914%20%20%20C76.311%2C50.284%2C74.173%2C48.145%2C71.545%2C48.145z%20M18.455%2C16.935h16.344c2.1%2C0%2C3.808%2C1.708%2C3.808%2C3.808v27.401H37.25V22.636%20%20%20c0-0.264-0.215-0.478-0.479-0.478H16.482c-0.264%2C0-0.479%2C0.214-0.479%2C0.478v36.585c0%2C0.264%2C0.215%2C0.478%2C0.479%2C0.478h7.507v7.644%20%20%20h-5.534c-2.101%2C0-3.81-1.709-3.81-3.81V20.743C14.645%2C18.643%2C16.354%2C16.935%2C18.455%2C16.935z%20M16.96%2C23.116h19.331v25.031h-7.535%20%20%20c-2.628%2C0-4.766%2C2.139-4.766%2C4.768v5.828h-7.03V23.116z%20M71.545%2C73.064H28.757c-2.101%2C0-3.81-1.708-3.81-3.808V52.914%20%20%20c0-2.102%2C1.709-3.812%2C3.81-3.812h42.788c2.1%2C0%2C3.809%2C1.71%2C3.809%2C3.812v16.343C75.354%2C71.356%2C73.645%2C73.064%2C71.545%2C73.064z%22%3E%3C/path%3E%3Cpath%20d%3D%22M28.919%2C58.424c-1.466%2C0-2.659%2C1.193-2.659%2C2.66c0%2C1.466%2C1.193%2C2.658%2C2.659%2C2.658c1.468%2C0%2C2.662-1.192%2C2.662-2.658%20%20%20C31.581%2C59.617%2C30.387%2C58.424%2C28.919%2C58.424z%20M28.919%2C62.786c-0.939%2C0-1.703-0.764-1.703-1.702c0-0.939%2C0.764-1.704%2C1.703-1.704%20%20%20c0.94%2C0%2C1.705%2C0.765%2C1.705%2C1.704C30.623%2C62.022%2C29.858%2C62.786%2C28.919%2C62.786z%22%3E%3C/path%3E%3Cpath%20d%3D%22M69.654%2C50.461H33.069c-0.264%2C0-0.479%2C0.215-0.479%2C0.479v20.288c0%2C0.264%2C0.215%2C0.478%2C0.479%2C0.478h36.585%20%20%20c0.263%2C0%2C0.477-0.214%2C0.477-0.478V50.939C70.131%2C50.676%2C69.917%2C50.461%2C69.654%2C50.461z%20M69.174%2C51.417V70.75H33.548V51.417H69.174z%22%3E%3C/path%3E%3Cpath%20d%3D%22M45.201%2C30.296c6.651%2C0%2C12.233%2C5.351%2C12.551%2C11.977l-3.033-2.638c-0.193-0.165-0.507-0.142-0.675%2C0.048%20%20%20c-0.174%2C0.198-0.153%2C0.501%2C0.045%2C0.676l3.883%2C3.375c0.09%2C0.075%2C0.198%2C0.115%2C0.312%2C0.115c0.141%2C0%2C0.273-0.061%2C0.362-0.166%20%20%20l3.371-3.877c0.173-0.2%2C0.151-0.502-0.047-0.675c-0.194-0.166-0.508-0.144-0.676%2C0.048l-2.592%2C2.979%20%20%20c-0.18-3.417-1.629-6.605-4.099-9.001c-2.538-2.461-5.877-3.817-9.404-3.817c-0.264%2C0-0.479%2C0.215-0.479%2C0.479%20%20%20C44.72%2C30.083%2C44.936%2C30.296%2C45.201%2C30.296z%22%3E%3C/path%3E%3C/g%3E%3C/svg%3E) center/50% 50% no-repeat rgba(244,244,244,1);bottom:0;font-size:14px;font-weight:600;left:0;line-height:20px;right:0;position:fixed;top:0;z-index:9999999}.a-orientation-modal:after{color:#666;content:\"Insert phone into Cardboard holder.\";display:block;position:absolute;text-align:center;top:70%;transform:translateY(-70%);width:100%}.a-orientation-modal button{background:url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%20version%3D%221.1%22%20x%3D%220px%22%20y%3D%220px%22%20viewBox%3D%220%200%20100%20100%22%20enable-background%3D%22new%200%200%20100%20100%22%20xml%3Aspace%3D%22preserve%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M55.209%2C50l17.803-17.803c1.416-1.416%2C1.416-3.713%2C0-5.129c-1.416-1.417-3.713-1.417-5.129%2C0L50.08%2C44.872%20%20L32.278%2C27.069c-1.416-1.417-3.714-1.417-5.129%2C0c-1.417%2C1.416-1.417%2C3.713%2C0%2C5.129L44.951%2C50L27.149%2C67.803%20%20c-1.417%2C1.416-1.417%2C3.713%2C0%2C5.129c0.708%2C0.708%2C1.636%2C1.062%2C2.564%2C1.062c0.928%2C0%2C1.856-0.354%2C2.564-1.062L50.08%2C55.13l17.803%2C17.802%20%20c0.708%2C0.708%2C1.637%2C1.062%2C2.564%2C1.062s1.856-0.354%2C2.564-1.062c1.416-1.416%2C1.416-3.713%2C0-5.129L55.209%2C50z%22%3E%3C/path%3E%3C/svg%3E) no-repeat;border:none;height:50px;text-indent:-9999px;width:50px}"; (_dereq_("browserify-css").createStyle(css, { "href": "src/style/aframe.css"})); module.exports = css;
+},{"../core/shader":69,"../lib/three":104,"../utils/":122}],108:[function(_dereq_,module,exports){
+var css = ".a-html{bottom:0;left:0;position:fixed;right:0;top:0}.a-body{height:100%;margin:0;overflow:hidden;padding:0;width:100%}:-webkit-full-screen{background-color:transparent}.a-hidden{display:none!important}.a-canvas{height:100%;left:0;position:absolute;top:0;width:100%}.a-canvas.a-grab-cursor:hover{cursor:grab;cursor:-moz-grabbing;cursor:-webkit-grab}.a-canvas.a-grab-cursor:active,.a-grabbing{cursor:grabbing;cursor:-moz-grabbing;cursor:-webkit-grabbing}// Class is removed when doing <a-scene embedded>. .a-canvas.fullscreen{width:100%!important;height:100%!important;top:0!important;left:0!important;right:0!important;bottom:0!important;z-index:999999!important;position:fixed!important}.a-inspector-loader{background-color:#ed3160;position:fixed;left:3px;top:3px;padding:6px 10px;color:#fff;text-decoration:none;font-size:12px;font-family:Roboto,sans-serif;text-align:center;z-index:99999;width:174px}@keyframes dots-1{from{opacity:0}25%{opacity:1}}@keyframes dots-2{from{opacity:0}50%{opacity:1}}@keyframes dots-3{from{opacity:0}75%{opacity:1}}@-webkit-keyframes dots-1{from{opacity:0}25%{opacity:1}}@-webkit-keyframes dots-2{from{opacity:0}50%{opacity:1}}@-webkit-keyframes dots-3{from{opacity:0}75%{opacity:1}}.a-inspector-loader .dots span{animation:dots-1 2s infinite steps(1);-webkit-animation:dots-1 2s infinite steps(1)}.a-inspector-loader .dots span:first-child+span{animation-name:dots-2;-webkit-animation-name:dots-2}.a-inspector-loader .dots span:first-child+span+span{animation-name:dots-3;-webkit-animation-name:dots-3}a-scene{display:block;position:relative;height:100%;width:100%}a-assets,a-scene audio,a-scene img,a-scene video{display:none}.a-enter-vr-modal,.a-orientation-modal{font-family:Consolas,Andale Mono,Courier New,monospace}.a-enter-vr-modal a{border-bottom:1px solid #fff;padding:2px 0;text-decoration:none;transition:.1s color ease-in}.a-enter-vr-modal a:hover{background-color:#fff;color:#111;padding:2px 4px;position:relative;left:-4px}.a-enter-vr{font-family:sans-serif,monospace;font-size:13px;width:100%;font-weight:200;line-height:16px;height:10%;position:absolute;right:20px;bottom:20px}.a-enter-vr.embedded{right:5px;bottom:5px}.a-enter-vr-button,.a-enter-vr-modal,.a-enter-vr-modal a{color:#fff}.a-enter-vr-button{background:url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20245.82%20141.73%22%3E%3Cdefs%3E%3Cstyle%3E.a%7Bfill%3A%23fff%3Bfill-rule%3Aevenodd%3B%7D%3C%2Fstyle%3E%3C%2Fdefs%3E%3Ctitle%3Emask%3C%2Ftitle%3E%3Cpath%20class%3D%22a%22%20d%3D%22M175.56%2C111.37c-22.52%2C0-40.77-18.84-40.77-42.07S153%2C27.24%2C175.56%2C27.24s40.77%2C18.84%2C40.77%2C42.07S198.08%2C111.37%2C175.56%2C111.37ZM26.84%2C69.31c0-23.23%2C18.25-42.07%2C40.77-42.07s40.77%2C18.84%2C40.77%2C42.07-18.26%2C42.07-40.77%2C42.07S26.84%2C92.54%2C26.84%2C69.31ZM27.27%2C0C11.54%2C0%2C0%2C12.34%2C0%2C28.58V110.9c0%2C16.24%2C11.54%2C30.83%2C27.27%2C30.83H99.57c2.17%2C0%2C4.19-1.83%2C5.4-3.7L116.47%2C118a8%2C8%2C0%2C0%2C1%2C12.52-.18l11.51%2C20.34c1.2%2C1.86%2C3.22%2C3.61%2C5.39%2C3.61h72.29c15.74%2C0%2C27.63-14.6%2C27.63-30.83V28.58C245.82%2C12.34%2C233.93%2C0%2C218.19%2C0H27.27Z%22%2F%3E%3C%2Fsvg%3E) 50% 50%/70% 70% no-repeat rgba(0,0,0,.35);border:0;bottom:0;cursor:pointer;min-width:50px;min-height:30px;padding-right:5%;padding-top:4%;position:absolute;right:0;transition:background-color .05s ease;-webkit-transition:background-color .05s ease;z-index:9999}.a-enter-vr-button:active,.a-enter-vr-button:hover{background-color:#666}[data-a-enter-vr-no-webvr] .a-enter-vr-button{border-color:#666;opacity:.65}[data-a-enter-vr-no-webvr] .a-enter-vr-button:active,[data-a-enter-vr-no-webvr] .a-enter-vr-button:hover{background-color:rgba(0,0,0,.35);cursor:not-allowed}.a-enter-vr-modal{background-color:#666;border-radius:0;display:none;min-height:32px;margin-right:70px;padding:9px;width:280px;right:2%;position:absolute}.a-enter-vr-modal:after{border-bottom:10px solid transparent;border-left:10px solid #666;border-top:10px solid transparent;display:inline-block;content:'';position:absolute;right:-5px;top:5px;width:0;height:0}.a-enter-vr-modal a,.a-enter-vr-modal p{display:inline}.a-enter-vr-modal p{margin:0}.a-enter-vr-modal p:after{content:' '}[data-a-enter-vr-no-headset].a-enter-vr:hover .a-enter-vr-modal,[data-a-enter-vr-no-webvr].a-enter-vr:hover .a-enter-vr-modal{display:block}.a-orientation-modal{background:url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%20version%3D%221.1%22%20x%3D%220px%22%20y%3D%220px%22%20viewBox%3D%220%200%2090%2090%22%20enable-background%3D%22new%200%200%2090%2090%22%20xml%3Aspace%3D%22preserve%22%3E%3Cpolygon%20points%3D%220%2C0%200%2C0%200%2C0%20%22%3E%3C/polygon%3E%3Cg%3E%3Cpath%20d%3D%22M71.545%2C48.145h-31.98V20.743c0-2.627-2.138-4.765-4.765-4.765H18.456c-2.628%2C0-4.767%2C2.138-4.767%2C4.765v42.789%20%20%20c0%2C2.628%2C2.138%2C4.766%2C4.767%2C4.766h5.535v0.959c0%2C2.628%2C2.138%2C4.765%2C4.766%2C4.765h42.788c2.628%2C0%2C4.766-2.137%2C4.766-4.765V52.914%20%20%20C76.311%2C50.284%2C74.173%2C48.145%2C71.545%2C48.145z%20M18.455%2C16.935h16.344c2.1%2C0%2C3.808%2C1.708%2C3.808%2C3.808v27.401H37.25V22.636%20%20%20c0-0.264-0.215-0.478-0.479-0.478H16.482c-0.264%2C0-0.479%2C0.214-0.479%2C0.478v36.585c0%2C0.264%2C0.215%2C0.478%2C0.479%2C0.478h7.507v7.644%20%20%20h-5.534c-2.101%2C0-3.81-1.709-3.81-3.81V20.743C14.645%2C18.643%2C16.354%2C16.935%2C18.455%2C16.935z%20M16.96%2C23.116h19.331v25.031h-7.535%20%20%20c-2.628%2C0-4.766%2C2.139-4.766%2C4.768v5.828h-7.03V23.116z%20M71.545%2C73.064H28.757c-2.101%2C0-3.81-1.708-3.81-3.808V52.914%20%20%20c0-2.102%2C1.709-3.812%2C3.81-3.812h42.788c2.1%2C0%2C3.809%2C1.71%2C3.809%2C3.812v16.343C75.354%2C71.356%2C73.645%2C73.064%2C71.545%2C73.064z%22%3E%3C/path%3E%3Cpath%20d%3D%22M28.919%2C58.424c-1.466%2C0-2.659%2C1.193-2.659%2C2.66c0%2C1.466%2C1.193%2C2.658%2C2.659%2C2.658c1.468%2C0%2C2.662-1.192%2C2.662-2.658%20%20%20C31.581%2C59.617%2C30.387%2C58.424%2C28.919%2C58.424z%20M28.919%2C62.786c-0.939%2C0-1.703-0.764-1.703-1.702c0-0.939%2C0.764-1.704%2C1.703-1.704%20%20%20c0.94%2C0%2C1.705%2C0.765%2C1.705%2C1.704C30.623%2C62.022%2C29.858%2C62.786%2C28.919%2C62.786z%22%3E%3C/path%3E%3Cpath%20d%3D%22M69.654%2C50.461H33.069c-0.264%2C0-0.479%2C0.215-0.479%2C0.479v20.288c0%2C0.264%2C0.215%2C0.478%2C0.479%2C0.478h36.585%20%20%20c0.263%2C0%2C0.477-0.214%2C0.477-0.478V50.939C70.131%2C50.676%2C69.917%2C50.461%2C69.654%2C50.461z%20M69.174%2C51.417V70.75H33.548V51.417H69.174z%22%3E%3C/path%3E%3Cpath%20d%3D%22M45.201%2C30.296c6.651%2C0%2C12.233%2C5.351%2C12.551%2C11.977l-3.033-2.638c-0.193-0.165-0.507-0.142-0.675%2C0.048%20%20%20c-0.174%2C0.198-0.153%2C0.501%2C0.045%2C0.676l3.883%2C3.375c0.09%2C0.075%2C0.198%2C0.115%2C0.312%2C0.115c0.141%2C0%2C0.273-0.061%2C0.362-0.166%20%20%20l3.371-3.877c0.173-0.2%2C0.151-0.502-0.047-0.675c-0.194-0.166-0.508-0.144-0.676%2C0.048l-2.592%2C2.979%20%20%20c-0.18-3.417-1.629-6.605-4.099-9.001c-2.538-2.461-5.877-3.817-9.404-3.817c-0.264%2C0-0.479%2C0.215-0.479%2C0.479%20%20%20C44.72%2C30.083%2C44.936%2C30.296%2C45.201%2C30.296z%22%3E%3C/path%3E%3C/g%3E%3C/svg%3E) center/50% 50% no-repeat rgba(244,244,244,1);bottom:0;font-size:14px;font-weight:600;left:0;line-height:20px;right:0;position:fixed;top:0;z-index:9999999}.a-orientation-modal:after{color:#666;content:\"Insert phone into Cardboard holder.\";display:block;position:absolute;text-align:center;top:70%;transform:translateY(-70%);width:100%}.a-orientation-modal button{background:url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%20version%3D%221.1%22%20x%3D%220px%22%20y%3D%220px%22%20viewBox%3D%220%200%20100%20100%22%20enable-background%3D%22new%200%200%20100%20100%22%20xml%3Aspace%3D%22preserve%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M55.209%2C50l17.803-17.803c1.416-1.416%2C1.416-3.713%2C0-5.129c-1.416-1.417-3.713-1.417-5.129%2C0L50.08%2C44.872%20%20L32.278%2C27.069c-1.416-1.417-3.714-1.417-5.129%2C0c-1.417%2C1.416-1.417%2C3.713%2C0%2C5.129L44.951%2C50L27.149%2C67.803%20%20c-1.417%2C1.416-1.417%2C3.713%2C0%2C5.129c0.708%2C0.708%2C1.636%2C1.062%2C2.564%2C1.062c0.928%2C0%2C1.856-0.354%2C2.564-1.062L50.08%2C55.13l17.803%2C17.802%20%20c0.708%2C0.708%2C1.637%2C1.062%2C2.564%2C1.062s1.856-0.354%2C2.564-1.062c1.416-1.416%2C1.416-3.713%2C0-5.129L55.209%2C50z%22%3E%3C/path%3E%3C/svg%3E) no-repeat;border:none;height:50px;text-indent:-9999px;width:50px}"; (_dereq_("browserify-css").createStyle(css, { "href": "src/style/aframe.css"})); module.exports = css;
 },{"browserify-css":1}],109:[function(_dereq_,module,exports){
-var css = ".rs-base{background-color:#333;border-radius:0;font:10px monospace;left:5px;line-height:1em;opacity:.85;overflow:hidden;padding:10px;position:fixed;top:5px;width:300px;z-index:10000}.rs-base div.hidden{display:none}.rs-base h1{color:#fff;cursor:pointer;font-size:1.4em;font-weight:300;margin:0 0 5px;padding:0}.rs-group{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-flex-direction:column-reverse;flex-direction:column-reverse;margin-bottom:5px}.rs-group:last-child{margin-bottom:0}.rs-counter-base{align-items:center;display:-webkit-box;display:-webkit-flex;display:flex;height:10px;-webkit-justify-content:space-between;justify-content:space-between;margin:2px 0}.rs-counter-id{font-weight:300;-webkit-box-ordinal-group:0;-webkit-order:0;order:0;width:54px}.rs-counter-value{font-weight:300;-webkit-box-ordinal-group:1;-webkit-order:1;order:1;text-align:right;width:35px}.rs-canvas{-webkit-box-ordinal-group:2;-webkit-order:2;order:2}@media (min-width:480px){.rs-base{left:20px;top:20px}}"; (_dereq_("browserify-css").createStyle(css, { "href": "src/style/rStats.css"})); module.exports = css;
+var css = ".rs-base{background-color:#333;border-radius:0;font:10px monospace;left:5px;line-height:1em;opacity:.85;overflow:hidden;padding:10px;position:fixed;top:5px;width:300px;z-index:10000}.rs-base div.hidden{display:none}.rs-base h1{color:#fff;cursor:pointer;font-size:1.4em;font-weight:300;margin:0 0 5px;padding:0}.rs-group{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-flex-direction:column-reverse;flex-direction:column-reverse;margin-bottom:5px}.rs-group:last-child{margin-bottom:0}.rs-counter-base{align-items:center;display:-webkit-box;display:-webkit-flex;display:flex;height:10px;-webkit-justify-content:space-between;justify-content:space-between;margin:2px 0}.rs-counter-base.alarm{color:#b70000;text-shadow:0 0 0 #b70000,0 0 1px #fff,0 0 1px #fff,0 0 2px #fff,0 0 2px #fff,0 0 3px #fff,0 0 3px #fff,0 0 4px #fff,0 0 4px #fff}.rs-counter-id{font-weight:300;-webkit-box-ordinal-group:0;-webkit-order:0;order:0;width:54px}.rs-counter-value{font-weight:300;-webkit-box-ordinal-group:1;-webkit-order:1;order:1;text-align:right;width:35px}.rs-canvas{-webkit-box-ordinal-group:2;-webkit-order:2;order:2}@media (min-width:480px){.rs-base{left:20px;top:20px}}"; (_dereq_("browserify-css").createStyle(css, { "href": "src/style/rStats.css"})); module.exports = css;
 },{"browserify-css":1}],110:[function(_dereq_,module,exports){
 var bind = _dereq_('../utils/bind');
 var constants = _dereq_('../constants/');
 var registerSystem = _dereq_('../core/system').registerSystem;
 
 var DEFAULT_CAMERA_ATTR = 'data-aframe-default-camera';
-var DEFAULT_USER_HEIGHT = 1.6;
 
 /**
  * Camera system. Manages which camera is active among multiple cameras in scene.
@@ -64905,7 +65365,7 @@ module.exports.System = registerSystem('camera', {
     defaultCameraEl = document.createElement('a-entity');
     defaultCameraEl.setAttribute('position', '0 0 0');
     defaultCameraEl.setAttribute(DEFAULT_CAMERA_ATTR, '');
-    defaultCameraEl.setAttribute('camera', {active: true, userHeight: DEFAULT_USER_HEIGHT});
+    defaultCameraEl.setAttribute('camera', {active: true, userHeight: constants.DEFAULT_CAMERA_HEIGHT});
     defaultCameraEl.setAttribute('wasd-controls', '');
     defaultCameraEl.setAttribute('look-controls', '');
     defaultCameraEl.setAttribute(constants.AFRAME_INJECTED, '');
@@ -64992,7 +65452,7 @@ function removeDefaultCamera (sceneEl) {
   sceneEl.removeChild(defaultCamera);
 }
 
-},{"../constants/":51,"../core/system":69,"../utils/bind":116}],111:[function(_dereq_,module,exports){
+},{"../constants/":52,"../core/system":70,"../utils/bind":116}],111:[function(_dereq_,module,exports){
 var geometries = _dereq_('../core/geometry').geometries;
 var registerSystem = _dereq_('../core/system').registerSystem;
 var THREE = _dereq_('../lib/three');
@@ -65132,7 +65592,7 @@ function toBufferGeometry (geometry, doBuffer) {
   return bufferGeometry;
 }
 
-},{"../core/geometry":61,"../core/system":69,"../lib/three":104}],112:[function(_dereq_,module,exports){
+},{"../core/geometry":62,"../core/system":70,"../lib/three":104}],112:[function(_dereq_,module,exports){
 _dereq_('./camera');
 _dereq_('./geometry');
 _dereq_('./light');
@@ -65219,7 +65679,7 @@ module.exports.System = registerSystem('light', {
   }
 });
 
-},{"../constants/":51,"../core/system":69,"../utils/bind":116}],114:[function(_dereq_,module,exports){
+},{"../constants/":52,"../core/system":70,"../utils/bind":116}],114:[function(_dereq_,module,exports){
 var registerSystem = _dereq_('../core/system').registerSystem;
 var THREE = _dereq_('../lib/three');
 var utils = _dereq_('../utils/');
@@ -65257,10 +65717,16 @@ module.exports.System = registerSystem('material', {
    */
   loadTexture: function (src, data, cb) {
     var self = this;
-    utils.srcLoader.validateSrc(src, loadImageCb, loadVideoCb, loadCanvasCb);
+
+    // Canvas.
+    if (src.tagName === 'CANVAS') {
+      this.loadCanvas(src, data, cb);
+      return;
+    }
+
+    utils.srcLoader.validateSrc(src, loadImageCb, loadVideoCb);
     function loadImageCb (src) { self.loadImage(src, data, cb); }
     function loadVideoCb (src) { self.loadVideo(src, data, cb); }
-    function loadCanvasCb (src) { self.loadCanvas(src, data, cb); }
   },
 
   /**
@@ -65464,29 +65930,24 @@ function loadImageTexture (src, data) {
 }
 
 /**
- * Set texture properties such as repeat.
+ * Set texture properties such as repeat and offset.
  *
  * @param {object} data - With keys like `repeat`.
  */
 function setTextureProperties (texture, data) {
-  // Handle UV repeat.
-  var repeat = data.repeat || '1 1';
-  var repeatXY = repeat.split(' ');
+  var offset = data.offset || {x: 0, y: 0};
+  var repeat = data.repeat || {x: 1, y: 1};
 
   // Don't bother setting repeat if it is 1/1. Power-of-two is required to repeat.
-  if (repeat === '1 1' || repeatXY.length !== 2) { return; }
+  if (repeat.x === 1 && repeat.y === 1) { return; }
 
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(parseFloat(repeatXY[0]), parseFloat(repeatXY[1]));
-
-  // Handle UV offset.
-  var offset = data.offset || '0 0';
-  var offsetXY = offset.split(' ');
+  texture.repeat.set(repeat.x, repeat.y);
 
   // Don't bother setting offset if it is 0/0.
-  if (offset === '0 0' || offsetXY.length !== 2) { return; }
-  texture.offset.set(parseFloat(offsetXY[0]), parseFloat(offsetXY[1]));
+  if (offset.x === 0 || offset.y === 0) { return; }
+  texture.offset.set(offset.x, offset.y);
 }
 
 /**
@@ -65540,7 +66001,7 @@ function fixVideoAttributes (videoEl) {
   return videoEl;
 }
 
-},{"../core/system":69,"../lib/three":104,"../utils/":122}],115:[function(_dereq_,module,exports){
+},{"../core/system":70,"../lib/three":104,"../utils/":122}],115:[function(_dereq_,module,exports){
 var registerSystem = _dereq_('../core/system').registerSystem;
 
 /**
@@ -65572,7 +66033,7 @@ module.exports.System = registerSystem('tracked-controls', {
   }
 });
 
-},{"../core/system":69}],116:[function(_dereq_,module,exports){
+},{"../core/system":70}],116:[function(_dereq_,module,exports){
 /**
  * Faster version of Function.prototype.bind
  * @param {Function} fn - Function to wrap.
@@ -65590,24 +66051,6 @@ module.exports = function bind (fn, ctx/* , arg1, arg2 */) {
 };
 
 },{}],117:[function(_dereq_,module,exports){
-var THREE = _dereq_('../lib/three');
-var dummyDolly = new THREE.Object3D();
-var controls = new THREE.VRControls(dummyDolly);
-
-/**
- * Determine if a headset is connected by checking if the
- * orientation is available
- */
-module.exports = function checkHeadsetConnected () {
-  var orientation;
-  controls.update();
-  orientation = dummyDolly.quaternion;
-  if (orientation._x !== 0 || orientation._y !== 0 || orientation._z !== 0) {
-    return true;
-  }
-};
-
-},{"../lib/three":104}],118:[function(_dereq_,module,exports){
 /* global THREE */
 
 // Coordinate string regex. Handles negative, positive, and decimals.
@@ -65681,7 +66124,7 @@ module.exports.toVector3 = function (vec3) {
   return new THREE.Vector3(vec3.x, vec3.y, vec3.z);
 };
 
-},{}],119:[function(_dereq_,module,exports){
+},{}],118:[function(_dereq_,module,exports){
 (function (process){
 var debugLib = _dereq_('debug');
 var extend = _dereq_('object-assign');
@@ -65778,7 +66221,85 @@ module.exports = debug;
 
 }).call(this,_dereq_('_process'))
 
-},{"_process":2,"debug":3,"object-assign":9}],120:[function(_dereq_,module,exports){
+},{"_process":2,"debug":3,"object-assign":9}],119:[function(_dereq_,module,exports){
+var THREE = _dereq_('../lib/three');
+var dolly = new THREE.Object3D();
+var controls = new THREE.VRControls(dolly);
+
+/**
+ * Determine if a headset is connected by checking if the
+ * orientation is available
+ */
+function checkHeadsetConnected () {
+  var orientation;
+  controls.update();
+  orientation = dolly.quaternion;
+  if (orientation._x !== 0 || orientation._y !== 0 || orientation._z !== 0) {
+    return true;
+  }
+  return false;
+}
+module.exports.checkHeadsetConnected = checkHeadsetConnected;
+
+/**
+ * Check for positional tracking.
+ */
+function checkHasPositionalTracking () {
+  var position = new THREE.Vector3();
+  return (function () {
+    if (isMobile() || isGearVR()) { return false; }
+    controls.update();
+    dolly.updateMatrix();
+    position.setFromMatrixPosition(dolly.matrix);
+    if (position.x !== 0 || position.y !== 0 || position.z !== 0) {
+      return true;
+    }
+    return false;
+  })();
+}
+module.exports.checkHasPositionalTracking = checkHasPositionalTracking;
+
+/**
+ * Checks if browser is mobile.
+ * @return {Boolean} True if mobile browser detected.
+ */
+var isMobile = (function () {
+  var _isMobile = false;
+  (function (a) {
+    if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0, 4))) {
+      _isMobile = true;
+    }
+    if (isIOS()) {
+      _isMobile = true;
+    }
+    if (isGearVR()) {
+      _isMobile = false;
+    }
+  })(navigator.userAgent || navigator.vendor || window.opera);
+
+  return function () { return _isMobile; };
+})();
+module.exports.isMobile = isMobile;
+
+function isIOS () {
+  return /iPad|iPhone|iPod/.test(navigator.platform);
+}
+module.exports.isIOS = isIOS;
+
+function isGearVR () {
+  return /SamsungBrowser.+Mobile VR/i.test(navigator.userAgent);
+}
+module.exports.isGearVR = isGearVR;
+
+/**
+ * Checks mobile device orientation.
+ * @return {Boolean} True if landscape orientation.
+ */
+module.exports.isLandscape = function () {
+  return window.orientation === 90 || window.orientation === -90;
+};
+
+},{"../lib/three":104}],120:[function(_dereq_,module,exports){
 /**
  * Get component property using encoded component name + component property name with a
  * delimiter.
@@ -65788,9 +66309,9 @@ module.exports.getComponentProperty = function (el, name, delimiter) {
   delimiter = delimiter || '.';
   if (name.indexOf(delimiter) !== -1) {
     splitName = name.split(delimiter);
-    return el.getComputedAttribute(splitName[0])[splitName[1]];
+    return el.getAttribute(splitName[0])[splitName[1]];
   }
-  return el.getComputedAttribute(name);
+  return el.getAttribute(name);
 };
 
 /**
@@ -65833,8 +66354,8 @@ var objectAssign = _dereq_('object-assign');
 
 module.exports.bind = _dereq_('./bind');
 module.exports.coordinates = _dereq_('./coordinates');
-module.exports.checkHeadsetConnected = _dereq_('./checkHeadsetConnected');
 module.exports.debug = _dereq_('./debug');
+module.exports.device = _dereq_('./device');
 module.exports.entity = _dereq_('./entity');
 module.exports.forceCanvasResizeSafariMobile = _dereq_('./forceCanvasResizeSafariMobile');
 module.exports.material = _dereq_('./material');
@@ -65914,42 +66435,6 @@ module.exports.diff = function (a, b) {
     }
   });
   return diff;
-};
-
-/**
- * Checks if browser is mobile.
- * @return {Boolean} True if mobile browser detected.
- */
-module.exports.isMobile = function () {
-  var check = false;
-  (function (a) {
-    if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0, 4))) {
-      check = true;
-    }
-    if (isIOS()) {
-      check = true;
-    }
-    if (isGearVR()) {
-      check = false;
-    }
-  })(navigator.userAgent || navigator.vendor || window.opera);
-  return check;
-};
-
-var isIOS = module.exports.isIOS = function () {
-  return /iPad|iPhone|iPod/.test(navigator.platform);
-};
-
-var isGearVR = module.exports.isGearVR = function () {
-  return /SamsungBrowser.+Mobile VR/i.test(navigator.userAgent);
-};
-
-/**
- * Checks mobile device orientation.
- * @return {Boolean} True if landscape orientation.
- */
-module.exports.isLandscape = function () {
-  return window.orientation === 90 || window.orientation === -90;
 };
 
 /**
@@ -66037,7 +66522,7 @@ module.exports.findAllScenes = function (el) {
 // Must be at bottom to avoid circular dependency.
 module.exports.srcLoader = _dereq_('./src-loader');
 
-},{"./bind":116,"./checkHeadsetConnected":117,"./coordinates":118,"./debug":119,"./entity":120,"./forceCanvasResizeSafariMobile":121,"./material":123,"./src-loader":124,"./styleParser":125,"deep-assign":6,"object-assign":9}],123:[function(_dereq_,module,exports){
+},{"./bind":116,"./coordinates":117,"./debug":118,"./device":119,"./entity":120,"./forceCanvasResizeSafariMobile":121,"./material":123,"./src-loader":124,"./styleParser":125,"deep-assign":6,"object-assign":9}],123:[function(_dereq_,module,exports){
 /**
  * Update `material.map` given `data.src`. For standard and flat shaders.
  *
@@ -66140,8 +66625,8 @@ var warn = debug('utils:src-loader:warn');
 
 /**
  * Validates a texture, either as a selector or as a URL.
- * Detects whether `src` is pointing to an image, video, or canvas, and invokes the
- * appropriate callback.
+ * Detects whether `src` is pointing to an image or video and invokes the appropriate
+ * callback.
  *
  * If `src` is selector, check if it's valid, return the el in the callback.
  * An el is returned so that it can be reused for texture loading.
@@ -66151,36 +66636,15 @@ var warn = debug('utils:src-loader:warn');
  * @params {string} src - A selector or a URL. URLs must be wrapped by `url()`.
  * @params {function} isImageCb - callback if texture is an image.
  * @params {function} isVideoCb - callback if texture is a video.
- * @params {function} isCanvasCb - callback if texture is a canvas.
  */
-function validateSrc (src, isImageCb, isVideoCb, isCanvasCb) {
-  var textureEl;
-  var isImage;
-  var isVideo;
-  var isCanvas;
-  var url = parseUrl(src);
-
-  // src is a url.
-  if (url) {
-    validateImageUrl(url, function isAnImageUrl (isImage) {
-      if (!isImage) { isVideoCb(url); return; }
-      isImageCb(url);
-    });
-    return;
-  }
-
-  // src is a query selector.
-  textureEl = validateAndGetQuerySelector(src);
-  if (!textureEl) { return; }
-  isImage = textureEl && textureEl.tagName === 'IMG';
-  isVideo = textureEl && textureEl.tagName === 'VIDEO';
-  isCanvas = textureEl && textureEl.tagName === 'CANVAS';
-  if (isImage) { return isImageCb(textureEl); }
-  if (isVideo) { return isVideoCb(textureEl); }
-  if (isCanvas) { return isCanvasCb(textureEl); }
-
-  // src is a valid selector but doesn't match with a <img>, <video>, or <canvas> element.
-  warn('"%s" does not point to a valid <img>, <video>, or <canvas> element', src);
+function validateSrc (src, isImageCb, isVideoCb) {
+  validateImageUrl(src, function isAnImageUrl (isImage) {
+    if (isImage) {
+      isImageCb(src);
+      return;
+    }
+    isVideoCb(src);
+  });
 }
 
 /**
@@ -66215,7 +66679,8 @@ function validateCubemapSrc (src, cb) {
   }
   if (urls) {
     for (i = 1; i < 7; i++) {
-      validateSrc(urls[i], isImageCb);
+      // TODO: cubemap property type.
+      validateSrc(parseUrl(urls[i]), isImageCb);
     }
     return;
   }
@@ -66282,7 +66747,7 @@ module.exports = {
   validateCubemapSrc: validateCubemapSrc
 };
 
-},{"./debug":119}],125:[function(_dereq_,module,exports){
+},{"./debug":118}],125:[function(_dereq_,module,exports){
 /* Utils for parsing style-like strings (e.g., "primitive: box; width: 5; height: 4.5"). */
 var styleParser = _dereq_('style-attr');
 
@@ -66527,43 +66992,33 @@ THREE.VRControls = function ( object, onError ) {
  * WebVR Spec: http://mozvr.github.io/webvr-spec/webvr.html
  *
  * Firefox: http://mozvr.com/downloads/
- * Chromium: https://drive.google.com/folderview?id=0BzudLt22BqGRbW9WTHMtOWMzNjQ&usp=sharing#list
+ * Chromium: https://webvr.info/get-chrome
  *
  */
 
 THREE.VREffect = function ( renderer, onError ) {
 
-	var isWebVR1 = true;
-
 	var vrDisplay, vrDisplays;
 	var eyeTranslationL = new THREE.Vector3();
 	var eyeTranslationR = new THREE.Vector3();
 	var renderRectL, renderRectR;
-	var eyeFOVL, eyeFOVR;
+
+	var frameData = null;
+	if ( 'VRFrameData' in window ) {
+
+		frameData = new VRFrameData();
+
+	}
 
 	function gotVRDisplays( displays ) {
 
 		vrDisplays = displays;
 
-		for ( var i = 0; i < displays.length; i ++ ) {
+		if ( displays.length > 0 ) {
 
-			if ( 'VRDisplay' in window && displays[ i ] instanceof VRDisplay ) {
+			vrDisplay = displays[ 0 ];
 
-				vrDisplay = displays[ i ];
-				isWebVR1 = true;
-				break; // We keep the first we encounter
-
-			} else if ( 'HMDVRDevice' in window && displays[ i ] instanceof HMDVRDevice ) {
-
-				vrDisplay = displays[ i ];
-				isWebVR1 = false;
-				break; // We keep the first we encounter
-
-			}
-
-		}
-
-		if ( vrDisplay === undefined ) {
+		} else {
 
 			if ( onError ) onError( 'HMD not available' );
 
@@ -66575,11 +67030,6 @@ THREE.VREffect = function ( renderer, onError ) {
 
 		navigator.getVRDisplays().then( gotVRDisplays );
 
-	} else if ( navigator.getVRDevices ) {
-
-		// Deprecated API.
-		navigator.getVRDevices().then( gotVRDisplays );
-
 	}
 
 	//
@@ -66590,6 +67040,7 @@ THREE.VREffect = function ( renderer, onError ) {
 	var scope = this;
 
 	var rendererSize = renderer.getSize();
+	var rendererUpdateStyle = false;
 	var rendererPixelRatio = renderer.getPixelRatio();
 
 	this.getVRDisplay = function () {
@@ -66604,29 +67055,21 @@ THREE.VREffect = function ( renderer, onError ) {
 
 	};
 
-	this.setSize = function ( width, height ) {
+	this.setSize = function ( width, height, updateStyle ) {
 
 		rendererSize = { width: width, height: height };
+		rendererUpdateStyle = updateStyle;
 
 		if ( scope.isPresenting ) {
 
 			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
 			renderer.setPixelRatio( 1 );
-
-			if ( isWebVR1 ) {
-
-				renderer.setSize( eyeParamsL.renderWidth * 2, eyeParamsL.renderHeight, false );
-
-			} else {
-
-				renderer.setSize( eyeParamsL.renderRect.width * 2, eyeParamsL.renderRect.height, false );
-
-			}
+			renderer.setSize( eyeParamsL.renderWidth * 2, eyeParamsL.renderHeight, false );
 
 		} else {
 
 			renderer.setPixelRatio( rendererPixelRatio );
-			renderer.setSize( width, height );
+			renderer.setSize( width, height, updateStyle );
 
 		}
 
@@ -66644,34 +67087,21 @@ THREE.VREffect = function ( renderer, onError ) {
 	function onFullscreenChange() {
 
 		var wasPresenting = scope.isPresenting;
-		scope.isPresenting = vrDisplay !== undefined && ( vrDisplay.isPresenting || ( ! isWebVR1 && document[ fullscreenElement ] instanceof window.HTMLElement ) );
+		scope.isPresenting = vrDisplay !== undefined && vrDisplay.isPresenting;
 
 		if ( scope.isPresenting ) {
 
 			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
-			var eyeWidth, eyeHeight;
+			var eyeWidth = eyeParamsL.renderWidth;
+			var eyeHeight = eyeParamsL.renderHeight;
 
-			if ( isWebVR1 ) {
+			var layers = vrDisplay.getLayers();
+			if ( layers.length ) {
 
-				eyeWidth = eyeParamsL.renderWidth;
-				eyeHeight = eyeParamsL.renderHeight;
+				var layer = layers[0];
 
-				if ( vrDisplay.getLayers ) {
-
-					var layers = vrDisplay.getLayers();
-					if ( layers.length ) {
-
-						leftBounds = layers[0].leftBounds || [ 0.0, 0.0, 0.5, 1.0 ];
-						rightBounds = layers[0].rightBounds || [ 0.5, 0.0, 0.5, 1.0 ];
-
-					}
-
-				}
-
-			} else {
-
-				eyeWidth = eyeParamsL.renderRect.width;
-				eyeHeight = eyeParamsL.renderRect.height;
+				leftBounds = layer.leftBounds !== null && layer.leftBounds.length === 4 ? layer.leftBounds : [ 0.0, 0.0, 0.5, 1.0 ];
+				rightBounds = layer.rightBounds !== null && layer.rightBounds.length === 4 ? layer.rightBounds : [ 0.5, 0.0, 0.5, 1.0 ];
 
 			}
 
@@ -66688,32 +67118,9 @@ THREE.VREffect = function ( renderer, onError ) {
 		} else if ( wasPresenting ) {
 
 			renderer.setPixelRatio( rendererPixelRatio );
-			renderer.setSize( rendererSize.width, rendererSize.height );
+			renderer.setSize( rendererSize.width, rendererSize.height, rendererUpdateStyle );
 
 		}
-
-	}
-
-	if ( canvas.requestFullscreen ) {
-
-		requestFullscreen = 'requestFullscreen';
-		fullscreenElement = 'fullscreenElement';
-		exitFullscreen = 'exitFullscreen';
-		document.addEventListener( 'fullscreenchange', onFullscreenChange, false );
-
-	} else if ( canvas.mozRequestFullScreen ) {
-
-		requestFullscreen = 'mozRequestFullScreen';
-		fullscreenElement = 'mozFullScreenElement';
-		exitFullscreen = 'mozCancelFullScreen';
-		document.addEventListener( 'mozfullscreenchange', onFullscreenChange, false );
-
-	} else {
-
-		requestFullscreen = 'webkitRequestFullscreen';
-		fullscreenElement = 'webkitFullscreenElement';
-		exitFullscreen = 'webkitExitFullscreen';
-		document.addEventListener( 'webkitfullscreenchange', onFullscreenChange, false );
 
 	}
 
@@ -66737,31 +67144,13 @@ THREE.VREffect = function ( renderer, onError ) {
 
 			}
 
-			if ( isWebVR1 ) {
+			if ( boolean ) {
 
-				if ( boolean ) {
-
-					resolve( vrDisplay.requestPresent( [ { source: canvas } ] ) );
-
-				} else {
-
-					resolve( vrDisplay.exitPresent() );
-
-				}
+				resolve( vrDisplay.requestPresent( [ { source: canvas } ] ) );
 
 			} else {
 
-				if ( canvas[ requestFullscreen ] ) {
-
-					canvas[ boolean ? requestFullscreen : exitFullscreen ]( { vrDisplay: vrDisplay } );
-					resolve();
-
-				} else {
-
-					console.error( 'No compatible requestFullscreen method found.' );
-					reject( new Error( 'No compatible requestFullscreen method found.' ) );
-
-				}
+				resolve( vrDisplay.exitPresent() );
 
 			}
 
@@ -66783,7 +67172,7 @@ THREE.VREffect = function ( renderer, onError ) {
 
 	this.requestAnimationFrame = function ( f ) {
 
-		if ( isWebVR1 && vrDisplay !== undefined ) {
+		if ( vrDisplay !== undefined ) {
 
 			return vrDisplay.requestAnimationFrame( f );
 
@@ -66797,7 +67186,7 @@ THREE.VREffect = function ( renderer, onError ) {
 
 	this.cancelAnimationFrame = function ( h ) {
 
-		if ( isWebVR1 && vrDisplay !== undefined ) {
+		if ( vrDisplay !== undefined ) {
 
 			vrDisplay.cancelAnimationFrame( h );
 
@@ -66811,7 +67200,7 @@ THREE.VREffect = function ( renderer, onError ) {
 
 	this.submitFrame = function () {
 
-		if ( isWebVR1 && vrDisplay !== undefined && scope.isPresenting ) {
+		if ( vrDisplay !== undefined && scope.isPresenting ) {
 
 			vrDisplay.submitFrame();
 
@@ -66845,21 +67234,8 @@ THREE.VREffect = function ( renderer, onError ) {
 			var eyeParamsL = vrDisplay.getEyeParameters( 'left' );
 			var eyeParamsR = vrDisplay.getEyeParameters( 'right' );
 
-			if ( isWebVR1 ) {
-
-				eyeTranslationL.fromArray( eyeParamsL.offset );
-				eyeTranslationR.fromArray( eyeParamsR.offset );
-				eyeFOVL = eyeParamsL.fieldOfView;
-				eyeFOVR = eyeParamsR.fieldOfView;
-
-			} else {
-
-				eyeTranslationL.copy( eyeParamsL.eyeTranslation );
-				eyeTranslationR.copy( eyeParamsR.eyeTranslation );
-				eyeFOVL = eyeParamsL.recommendedFieldOfView;
-				eyeFOVR = eyeParamsR.recommendedFieldOfView;
-
-			}
+			eyeTranslationL.fromArray( eyeParamsL.offset );
+			eyeTranslationR.fromArray( eyeParamsR.offset );
 
 			if ( Array.isArray( scene ) ) {
 
@@ -66891,16 +67267,14 @@ THREE.VREffect = function ( renderer, onError ) {
 
 			} else  {
 
+				renderer.setRenderTarget( null );
 				renderer.setScissorTest( true );
-			
+
 			}
 
 			if ( renderer.autoClear || forceClear ) renderer.clear();
 
 			if ( camera.parent === null ) camera.updateMatrixWorld();
-
-			cameraL.projectionMatrix = fovToProjection( eyeFOVL, true, camera.near, camera.far );
-			cameraR.projectionMatrix = fovToProjection( eyeFOVR, true, camera.near, camera.far );
 
 			camera.matrixWorld.decompose( cameraL.position, cameraL.quaternion, cameraL.scale );
 			camera.matrixWorld.decompose( cameraR.position, cameraR.quaternion, cameraR.scale );
@@ -66909,6 +67283,23 @@ THREE.VREffect = function ( renderer, onError ) {
 			cameraL.translateOnAxis( eyeTranslationL, scale );
 			cameraR.translateOnAxis( eyeTranslationR, scale );
 
+			if ( vrDisplay.getFrameData ) {
+
+				vrDisplay.depthNear = camera.near;
+				vrDisplay.depthFar = camera.far;
+
+				vrDisplay.getFrameData( frameData );
+
+				cameraL.projectionMatrix.elements = frameData.leftProjectionMatrix;
+				cameraR.projectionMatrix.elements = frameData.rightProjectionMatrix;
+
+			} else {
+
+				cameraL.projectionMatrix = fovToProjection( eyeParamsL.fieldOfView, true, camera.near, camera.far );
+				cameraR.projectionMatrix = fovToProjection( eyeParamsR.fieldOfView, true, camera.near, camera.far );
+
+
+			}
 
 			// render left eye
 			if ( renderTarget ) {
@@ -66946,11 +67337,11 @@ THREE.VREffect = function ( renderer, onError ) {
 				renderer.setRenderTarget( null );
 
 			} else {
-				
+
 				renderer.setScissorTest( false );
 
 			}
-			
+
 			if ( autoUpdate ) {
 
 				scene.autoUpdate = true;
@@ -67048,6 +67439,7 @@ THREE.VREffect = function ( renderer, onError ) {
 	}
 
 };
+
 },{}],128:[function(_dereq_,module,exports){
 window.glStats = function () {
 
@@ -67510,8 +67902,6 @@ window.rStats = function rStats ( settings ) {
             _graph = new Graph( _dom, _id, _def ),
             _started = false;
 
-        _dom.className = 'rs-counter-base';
-
         _spanId.className = 'rs-counter-id';
         _spanId.textContent = ( _def && _def.caption ) ? _def.caption : _id;
 
@@ -67566,7 +67956,8 @@ window.rStats = function rStats ( settings ) {
             _spanValueText.nodeValue = Math.round( v * 100 ) / 100;
             var a = ( _def && ( ( _def.below && _value < _def.below ) || ( _def.over && _value > _def.over ) ) );
             _graph.draw( _value, a );
-            _dom.style.color = a ? '#b70000' : '#ffffff';
+            _dom.className = a ? 'rs-counter-base alarm' : 'rs-counter-base';
+
         }
 
         function _frame () {
