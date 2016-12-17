@@ -57214,7 +57214,7 @@ module.exports={
     "browserify": "browserify src/index.js -s 'AFRAME' -p browserify-derequire",
     "build": "mkdirp build/ && npm run browserify -- --debug -t [envify --INSPECTOR_VERSION dev] -o dist/aframe.min.js",
     "codecov": "codecov",
-    "dev": "npm run build && cross-env INSPECTOR_VERSION=dev node ./scripts/budo -t envify",
+    "dev": "npm run build && cross-env node ./scripts/budo -t envify",
     "dist": "npm run dist:min && npm run dist:max",
     "dist:max": "npm run browserify -s -- --debug -t [envify --INSPECTOR_VERSION dev] | exorcist dist/aframe-master.js.map > dist/aframe-master.js",
     "dist:min": "npm run browserify -s -- --debug -t [envify --INSPECTOR_VERSION dev] -p [minifyify --map aframe-master.min.js.map --output dist/aframe-master.min.js.map] -o dist/aframe-master.min.js",
