@@ -104,7 +104,6 @@ module.exports.Component = registerComponent('raycaster', {
     // Raycast.
     this.updateOriginDirection();
     intersections = this.raycaster.intersectObjects(this.objects, data.recursive);
-
     // Only keep intersections against objects that have a reference to an entity.
     intersections = intersections.filter(function hasEl (intersection) {
       return !!intersection.object.el;

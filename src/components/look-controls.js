@@ -4,7 +4,6 @@ var isMobile = require('../utils/').device.isMobile();
 var bind = require('../utils/bind');
 
 // To avoid recalculation at every mouse movement tick
-var activeVRDisplay = require('../utils/').getUrlParameter('activeVRDisplay');
 var PI_2 = Math.PI / 2;
 var radToDeg = THREE.Math.radToDeg;
 
@@ -50,7 +49,7 @@ module.exports.Component = registerComponent('look-controls', {
       this.pitchObject.rotation.set(0, 0, 0);
       this.yawObject.rotation.set(0, 0, 0);
     }
-    this.controls.standing = false; // data.standing;
+    this.controls.standing = data.standing;
     this.controls.update();
     this.updateOrientation();
     this.updatePosition();
@@ -94,7 +93,7 @@ module.exports.Component = registerComponent('look-controls', {
   setupHMDControls: function () {
     this.dolly = new THREE.Object3D();
     this.euler = new THREE.Euler();
-    this.controls = new THREE.VRControls(this.dolly, activeVRDisplay);
+    this.controls = new THREE.VRControls(this.dolly);
     this.controls.userHeight = 0.0;
   },
 

@@ -1,15 +1,12 @@
-var getMeshMixin = require('../getMeshMixin');
 var registerPrimitive = require('../primitives').registerPrimitive;
-var utils = require('../../../utils/');
 
-registerPrimitive('a-link', utils.extendDeep({}, getMeshMixin(), {
+registerPrimitive('a-link', {
   defaultComponents: {
-    link: {},
-    geometry: {primitive: 'sphere', radius: 0.5},
-    material: {shader: 'flat'}
+    link: {}
   },
 
   mappings: {
-    href: 'link.url'
+    href: 'link.url',
+    src: 'link.src'
   }
-}));
+});
