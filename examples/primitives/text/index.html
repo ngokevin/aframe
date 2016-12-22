@@ -1,125 +1,100 @@
 <html>
   <head>
-    <title>A-Frame BMFont Text Component - Anchor</title>
+    <title>Example</title>
     <script src="../../../dist/aframe.js"></script>
   </head>
   <body>
-    <a-scene debug>
-      <a-assets></a-assets>
-      <a-sky color="black"></a-sky>
-
-      <a-entity position="0.0 3.8 1.5">
+    <a-scene>
+      <a-entity position="0 1.8 2">
         <a-entity camera look-controls wasd-controls></a-entity>
       </a-entity>
 
-      <a-entity position="0 0 -3.99"
-                geometry="primitive: plane; width: 0.057; height: 0.057"
-                material="color: #C03546">
+      <a-entity position="-2.5 0.7 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+      <a-entity id="opacity" position="-2.5 0.7 0"
+                bmfont-text="color: white; align: center; text: Animate opacity; width: 1.5">
+      </a-entity>
+      <a-entity position="0 0.7 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+      <a-entity id="color" position="0 0.7 0"
+                bmfont-text="color: white; align: center; text: Animate color; width: 1.5">
+      </a-entity>
+      <a-entity position="2.5 0.7 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+      <a-entity id="size" position="2.5 0.7 0"
+                bmfont-text="color: white; align: center; text: Animate size; width: 1.5">
       </a-entity>
 
-      <a-plane position="0 0 -4"
-              width="2" height="auto"
-              color="blue"
-              bmfont-text="color:white;align:center;
-                           fnt:DejaVu;
-                           text:
-a-text align='center' (anchor='align') DejaVu width 2
-123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890">
-      </a-plane>
 
-      <a-entity position="0 1 -3.99"
-                geometry="primitive: plane; width: 0.057; height: 0.057"
-                material="color: #C03546">
+      <a-entity position="-2.5 1 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+      <a-entity position="-2.5 1 0"
+                bmfont-text="anchor: left; width: 1.5; color: white; text: (left anchor) Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam">
+      </a-entity>
+      <a-entity position="0 1 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+      <a-entity position="0 1 0"
+                bmfont-text="anchor: center; width: 1.5; color: white; text: (center anchor) Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam">
+      </a-entity>
+      <a-entity position="2.5 1 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+      <a-entity position="2.5 1 0"
+                bmfont-text="anchor: right; width: 1.5; color: white; text: (right anchor) Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam">
       </a-entity>
 
-      <a-text position="0 1 -4"
-              color="white" 
-              align="left" anchor="left" width="5"
-              text="anchor='left' (default align)
-123456789012345678901234567890123456789012345678901234567890">
-      </a-text>
 
-      <a-entity position="0 2 -3.99"
-                geometry="primitive: plane; width: 0.057; height: 0.057"
-                material="color: #C03546">
+      <a-entity position="-1 2.5 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+      <a-entity position="-1 2.5 0"
+                bmfont-text="width: 2; color: white; text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam">
       </a-entity>
 
-      <a-entity position="0 2 -4"
-                geometry="primitive: plane; width: 5"
-                material="color: #333333"
-                bmfont-text="color: white; anchor: center;
-                             fnt:SourceCodePro;
-                             text:
-anchor='center' (default align) SourceCodePro
-123456789012345678901234567890123456789012345678901234567890">
+      <a-entity position="-1 2 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+      <a-entity position="-1 2 0"
+                bmfont-text="width: 2; lineHeight: 50; letterSpacing: 5; color: white; text: (line and letter spacing) Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam">
       </a-entity>
 
-      <a-entity position="0 3 -3.99"
-                geometry="primitive: plane; width: 0.057; height: 0.057"
-                material="color: #C03546">
+      <a-entity position="2 2 0">
+        <a-entity position="0 0 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+        <a-entity position="0 0 0" geometry="primitive: plane; width:auto; height:auto" material="color: #333"
+                  bmfont-text="color: yellow; align: left; text: left aligned; width: 2; ">
+        </a-entity>
+        <a-entity position="0 0.2 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+        <a-entity position="0 0.2 0" geometry="primitive: plane; width:auto; height:auto" material="color: #333"
+                  bmfont-text="color: red; align: right; text: right aligned; width: 2; ">
+        </a-entity>
+        <a-entity position="0 0.4 0.01" geometry="primitive: plane; width:0.02; height: 0.02" material="color: red"></a-entity>
+        <a-entity position="0 0.4 0" geometry="primitive: plane; width:auto; height:auto" material="color: #eee"
+                  bmfont-text="color: blue; align: center; text: center aligned; width: 2; ">
+        </a-entity>
       </a-entity>
-
-      <a-entity position="0 3 -4"
-                bmfont-text="color: white; baseline:top; anchor:right; width: 5;
-                             fnt:Aileron-Semibold;
-                             text:
-anchor='right' baseline='top' (default align) Aileron-Semibold
-123456789012345678901234567890123456789012345678901234567890">
-      </a-entity>
-
-      <a-entity position="0 4 -3/99"
-                geometry="primitive: plane; width: 0.057; height: 0.057"
-                material="color: #C03546">
-      </a-entity>
-
-      <a-entity position="0 4 -4"
-                bmfont-text="color: white; align: left; width: 5;
-                             fnt:Exo2SemiBold;
-                             text:
-align='left' (default anchor) Exo2SemiBold
-123456789012345678901234567890123456789012345678901234567890">
-      </a-entity>
-
-      <a-entity position="0 5 -3.99"
-                geometry="primitive: plane; width: 0.057; height: 0.057"
-                material="color: #C03546">
-      </a-entity>
-
-      <a-entity position="0 5 -4"
-                bmfont-text="color: white; align: center; width: 5;
-                             fnt:KelsonSans;
-                             text:
-align='center' (default anchor) KelsonSans
-123456789012345678901234567890123456789012345678901234567890">
-      </a-entity>
-
-      <a-entity position="0 6 -3.99"
-                geometry="primitive: plane; width: 0.057; height: 0.057"
-                material="color: #C03546">
-      </a-entity>
-
-      <a-entity position="0 6 -4"
-                bmfont-text="color: white; align: right; width: 5;
-                             fnt:Monoid;
-                             text:
-align='right' (default anchor) Monoid
-123456789012345678901234567890123456789012345678901234567890">
-      </a-entity>
-
-      <a-entity position="0 7 -3.99"
-                geometry="primitive: plane; width: 0.057; height: 0.057"
-                material="color: #C03546">
-      </a-entity>
-
-      <a-plane position="0 7 -4"
-              width="8" height="auto"
-              color="blue"
-              bmfont-text="color:white;align:center;
-                           fnt:DejaVu;
-                           text:
-a-plane align:center (anchor:align) DejaVu width 8
-1234567890123456789012345678901234567890">
-      </a-plane>
+      <a-sky color="black"></a-sky>
     </a-scene>
+    <script type="text/javascript">
+      // Animate opacity
+      var opacity = document.getElementById('opacity');
+      var obj = {opacity: 0};
+      var tween = new AFRAME.TWEEN.Tween(obj)
+        .to({opacity: 1}, 500)
+        .repeat( Infinity )
+        .yoyo( true )
+        .onUpdate(function () {
+          opacity.setAttribute('bmfont-text', 'opacity', obj.opacity);
+        })
+        .start();
+
+      // Animate color
+      var color = document.getElementById('color');
+      setInterval(function() {
+        var randomHexColor = '#'+Math.floor(Math.random()*16777215).toString(16);
+        color.setAttribute('bmfont-text', 'color', randomHexColor);
+      }, 1000);
+
+      // Animate size
+      var size = document.getElementById('size');
+      var objsize = {scale: 0.005};
+      var tween = new AFRAME.TWEEN.Tween(objsize)
+        .to({scale: 0.01}, 1000)
+        .repeat( Infinity )
+        .yoyo( true )
+        .onUpdate(function () {
+          size.setAttribute('bmfont-text', 'scale', objsize.scale);
+        })
+        .start();
+
+    </script>
   </body>
 </html>

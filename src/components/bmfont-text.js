@@ -1,6 +1,6 @@
 var registerComponent = require('../core/component').registerComponent;
-
 var THREE = require('../lib/three');
+
 var createTextGeometry = require('three-bmfont-text');
 var loadBMFont = require('load-bmfont');
 var path = require('path');
@@ -10,13 +10,12 @@ var createMSDF = require('three-bmfont-text/shaders/msdf');
 var createBasic = require('three-bmfont-text/shaders/basic');
 
 var alignments = ['left', 'right', 'center'];
-var anchors = alignments;
-anchors.push('align');
+var anchors = ['left', 'right', 'center', 'align'];
 var baselines = ['top', 'center', 'bottom'];
 
 var DEFAULT_WIDTH = 1; // 1 matches other AFRAME default widths... 5 matches prior bmfont examples etc.
 
-var FONT_BASE_URL = 'https://cdn.rawgit.com/chenzlabs/aframe-bmfont-component/4b8fa074289be8ca9cb11b96557c5e7b3b763c18/fonts/';
+var FONT_BASE_URL = 'https://cdn.rawgit.com/fernandojsg/aframe-bmfont-component/5c88edf40bbc88b336d7db6f040c3ae0d2f65aff/fonts/';
 var fontMap = {
   'default': FONT_BASE_URL + 'DejaVu-sdf.fnt',
   'Aileron-Semibold': FONT_BASE_URL + 'Aileron-Semibold.fnt',
@@ -76,8 +75,8 @@ module.exports.Component = registerComponent('bmfont-text', {
     } else if (this.currentFont) {
       // new data like change of text string
       var font = this.currentFont;
-      var textrenderwidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
-      var options = assign({}, data, { font: font, width: textrenderwidth, lineHeight: data.lineHeight || font.common.lineHeight });
+      var textRenderWidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
+      var options = assign({}, data, { font: font, width: textRenderWidth, lineHeight: data.lineHeight || font.common.lineHeight });
       this.geometry.update(options);
       this.updateLayout(data);
     }
@@ -165,8 +164,8 @@ module.exports.Component = registerComponent('bmfont-text', {
       var data = self.coerceData(self.data);
 
       var src = self.data.fntImage || self.lookupFont(self.data.fnt).replace('.fnt', '.png') || path.dirname(data.fnt) + '/' + font.pages[0];
-      var textrenderwidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
-      var options = assign({}, data, { font: font, width: textrenderwidth, lineHeight: data.lineHeight || font.common.lineHeight });
+      var textRenderWidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
+      var options = assign({}, data, { font: font, width: textRenderWidth, lineHeight: data.lineHeight || font.common.lineHeight });
       geometry.update(options);
       self.mesh.geometry = geometry;
 
@@ -193,10 +192,10 @@ module.exports.Component = registerComponent('bmfont-text', {
     var el = this.el;
     var font = this.currentFont;
     var geometry = this.geometry;
-    var elgeo = el.getAttribute('geometry');
-    var width = data.width || (elgeo && elgeo.width) || DEFAULT_WIDTH;
-    var textrenderwidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
-    var textScale = width / textrenderwidth;
+    var elGeo = el.getAttribute('geometry');
+    var width = data.width || (elGeo && elGeo.width) || DEFAULT_WIDTH;
+    var textRenderWidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
+    var textScale = width / textRenderWidth;
     var height = textScale * geometry.layout.height;
     var x;
     var y;
@@ -205,9 +204,9 @@ module.exports.Component = registerComponent('bmfont-text', {
     var baseline = data.baseline;
 
     // update geometry dimensions to match layout, if not specified
-    if (elgeo) {
-      if (!elgeo.width) { el.setAttribute('geometry', 'width', width); }
-      if (!elgeo.height) { el.setAttribute('geometry', 'height', height); }
+    if (elGeo) {
+      if (!elGeo.width) { el.setAttribute('geometry', 'width', width); }
+      if (!elGeo.height) { el.setAttribute('geometry', 'height', height); }
     }
 
     // anchors text left/center/right
