@@ -85,13 +85,13 @@
 
       // Animate size
       var size = document.getElementById('size');
-      var objsize = {scale: 0.005};
+      var objsize = {scale: 60};
       var tween = new AFRAME.TWEEN.Tween(objsize)
-        .to({scale: 0.01}, 1000)
+        .to({scale: 20}, 1000)
         .repeat( Infinity )
         .yoyo( true )
         .onUpdate(function () {
-          size.setAttribute('bmfont-text', 'scale', objsize.scale);
+          size.setAttribute('bmfont-text', 'wrapcount', objsize.scale);
         })
         .start();
 
