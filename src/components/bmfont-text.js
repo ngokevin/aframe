@@ -15,6 +15,10 @@ var baselines = ['top', 'center', 'bottom'];
 
 var DEFAULT_WIDTH = 1; // 1 matches other AFRAME default widths... 5 matches prior bmfont examples etc.
 
+// @bryik set anisotropy to 16 because I think it improves the look
+// of large amounts of text particularly when viewed from an angle.
+var MAX_ANISOTROPY = 16;
+
 var FONT_BASE_URL = 'https://cdn.rawgit.com/fernandojsg/aframe-bmfont-component/5c88edf40bbc88b336d7db6f040c3ae0d2f65aff/fonts/';
 var fontMap = {
   'default': FONT_BASE_URL + 'DejaVu-sdf.fnt',
@@ -31,7 +35,6 @@ var fontMap = {
 module.exports.Component = registerComponent('bmfont-text', {
   schema: {
     // scale is now determined by width and wrappixels/wrapcount... scale: {default: 0.003},
-    font: {default: ''},
     tabSize: {default: 4},
     anchor: {default: 'center', oneOf: anchors}, // center default to match primitives like plane; if 'align', null or undefined, same as align
     baseline: {default: 'center', oneOf: baselines},
@@ -41,12 +44,12 @@ module.exports.Component = registerComponent('bmfont-text', {
     align: {type: 'string', default: 'left', oneOf: alignments},
     letterSpacing: {type: 'number', default: 0},
     lineHeight: {type: 'number'},  // default to font's lineHeight value
-    fnt: {type: 'string', default: 'default'},
-    fntImage: {type: 'string'}, // default to fnt but with .fnt replaced by .png
-    mode: {default: 'normal', oneOf: ['normal', 'pre', 'nowrap']},
+    font: {type: 'string', default: 'default'},
+    fontImage: {type: 'string'}, // default to fnt but with .fnt replaced by .png
+    whiteSpace: {default: 'normal', oneOf: ['normal', 'pre', 'nowrap']},
     color: {type: 'color', default: '#000'},
     opacity: {type: 'number', default: '1.0'},
-    type: {default: 'SDF', oneOf: ['SDF', 'basic', 'MSDF']},
+    shader: {default: 'SDF', oneOf: ['SDF', 'basic', 'MSDF']},
     side: {default: 'front', oneOf: ['front', 'back', 'double']},
     transparent: {default: true},
     alphaTest: {default: 0.5},
@@ -56,7 +59,7 @@ module.exports.Component = registerComponent('bmfont-text', {
 
   init: function () {
     this.texture = new THREE.Texture();
-    this.texture.anisotropy = 16; // ??
+    this.texture.anisotropy = MAX_ANISOTROPY;
 
     this.geometry = createTextGeometry();
 
@@ -69,7 +72,7 @@ module.exports.Component = registerComponent('bmfont-text', {
     var data = this.coerceData(this.data);
 
     // decide whether to update font, or just text data
-    if (!oldData || oldData.fnt !== data.fnt) {
+    if (!oldData || oldData.font !== data.font) {
       // new font, will also subsequently change data & layout
       this.updateFont();
     } else if (this.currentFont) {
@@ -81,7 +84,7 @@ module.exports.Component = registerComponent('bmfont-text', {
       this.updateLayout(data);
     }
     // ??
-    this.updateMaterial(oldData.type);
+    this.updateMaterial(oldData.shader);
   },
 
   remove: function () {
@@ -91,21 +94,22 @@ module.exports.Component = registerComponent('bmfont-text', {
   },
 
   coerceData: function (data) {
-    // We have to coerce some data to numbers/booleans
+    // We have to coerce some data to numbers/booleans,
+    // as they will be passed directly into text creation and update
     data = assign({}, data);
-    if (typeof data.lineHeight !== 'undefined') {
+    if (data.lineHeight !== undefined) {
       data.lineHeight = parseFloat(data.lineHeight);
       if (!isFinite(data.lineHeight)) { data.lineHeight = undefined; }
     }
-    if (typeof data.width !== 'undefined') {
+    if (data.width !== undefined) {
       data.width = parseFloat(data.width);
       if (!isFinite(data.width)) { data.width = undefined; }
     }
     return data;
   },
 
-  updateMaterial: function (oldType) {
-    if (oldType !== this.data.type) {
+  updateMaterial: function (oldShader) {
+    if (oldShader !== this.data.shader) {
       var data = {
         side: threeSideFromString(this.data.side),
         transparent: this.data.transparent,
@@ -115,9 +119,9 @@ module.exports.Component = registerComponent('bmfont-text', {
         map: this.texture
       };
       var shader;
-      if (this.data.type === 'SDF') {
+      if (this.data.shader === 'SDF') {
         shader = createSDF(data);
-      } else if (this.data.type === 'MSDF') {
+      } else if (this.data.shader === 'MSDF') {
         shader = createMSDF(data);
       } else {
         shader = createBasic(data);
@@ -129,9 +133,7 @@ module.exports.Component = registerComponent('bmfont-text', {
       this.material.uniforms.map.value = this.texture;
     }
 
-    if (this.mesh) {
-      this.mesh.material = this.material;
-    }
+    if (this.mesh) { this.mesh.material = this.material; }
   },
 
   registerFont: function (key, url) { fontMap[key] = url; },
@@ -139,7 +141,7 @@ module.exports.Component = registerComponent('bmfont-text', {
   lookupFont: function (keyOrUrl) { return fontMap[keyOrUrl] || keyOrUrl; },
 
   updateFont: function () {
-    if (!this.data.fnt) {
+    if (!this.data.font) {
       console.error(new TypeError('No font specified for bmfont text!'));
       return;
     }
@@ -147,31 +149,30 @@ module.exports.Component = registerComponent('bmfont-text', {
     var geometry = this.geometry;
     var self = this;
     this.mesh.visible = false;
-    loadBMFont(this.lookupFont(this.data.fnt), onLoadFont);
+    loadBMFont(this.lookupFont(this.data.font), onLoadFont);
 
-    function onLoadFont (err, font) {
-      if (err) {
-        console.error(new Error('Error loading font ' + self.data.fnt +
+    function onLoadFont (error, font) {
+      if (error) {
+        throw new Error('Error loading font ' + self.data.font +
           '\nMake sure the path is correct and that it points' +
-          ' to a valid BMFont file (xml, json, fnt).\n' + err.message));
-        return;
+          ' to a valid BMFont file (xml, json, fnt).\n' + error.message);
       }
 
       if (font.pages.length !== 1) {
-        console.error(new Error('Currently only single-page bitmap fonts are supported.'));
-        return;
+        throw new Error('Currently only single-page bitmap fonts are supported.');
       }
       var data = self.coerceData(self.data);
 
-      var src = self.data.fntImage || self.lookupFont(self.data.fnt).replace('.fnt', '.png') || path.dirname(data.fnt) + '/' + font.pages[0];
+      var src = self.data.fontImage || self.lookupFont(self.data.font).replace('.fnt', '.png') || path.dirname(data.font) + '/' + font.pages[0];
       var textRenderWidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
       var options = assign({}, data, { font: font, width: textRenderWidth, lineHeight: data.lineHeight || font.common.lineHeight });
+      var object3D;
       geometry.update(options);
       self.mesh.geometry = geometry;
 
-      var obj3d = self.el.object3D;
-      if (obj3d.children.indexOf(self.mesh) === -1) {
-        self.el.object3D.add(self.mesh);
+      object3D = self.el.object3D;
+      if (object3D.children.indexOf(self.mesh) === -1) {
+        object3D.add(self.mesh);
       }
 
       loadTexture(src, onLoadTexture);
@@ -256,6 +257,6 @@ function threeSideFromString (str) {
     case 'front': return THREE.FrontSide;
     case 'back': return THREE.BackSide;
     default:
-      throw new TypeError('unknown side string ' + str);
+      throw new TypeError('Unknown side string ' + str);
   }
 }
