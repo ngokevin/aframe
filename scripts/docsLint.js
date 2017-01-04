@@ -72,16 +72,6 @@ function checkLink (pagePath, url) {
   var headingIds;
   var urlPath;
 
-  function convertHeading (heading) {
-    return heading
-      .replace(/#+\s+/, '')
-      .toLowerCase()
-      .replace(/`\./g, '')  // Remove leading dot.
-      .replace(/[`*\(\),]/g, '')  // Remove special characters.
-      .replace(/[^\w]+/g, '-')
-      .replace(/-$/g, '');
-  }
-
   // Relative path.
   if (url.indexOf('.') === 0) {
     // Check page exists.
@@ -157,3 +147,14 @@ console.log(chalk.red.bold(`${errorCount} errors`));
 
 // Fail.
 if (errorCount) { process.exit(1); }
+
+function convertHeading (heading) {
+  return heading
+    .replace(/#+\s+/, '')
+    .toLowerCase()
+    .replace(/`\./g, '')  // Remove leading dot.
+    .replace(/[`*\(\),]/g, '')  // Remove special characters.
+    .replace(/[^\w]+/g, '-')
+    .replace(/-$/g, '');
+}
+module.exports.convertHeading = convertHeading;
