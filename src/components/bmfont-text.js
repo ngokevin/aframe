@@ -91,8 +91,8 @@ module.exports.Component = registerComponent('bmfont-text', {
       this.geometry.update(options);
       this.updateLayout(data);
     }
-    // ??
-    this.updateMaterial(oldData.shader);
+    // if shader changed, update
+    this.updateMaterial(oldData && {shader: oldData.shader, customShader: oldData.customShader});
   },
 
   remove: function () {
@@ -117,8 +117,11 @@ module.exports.Component = registerComponent('bmfont-text', {
   },
 
   updateMaterial: function (oldShader) {
-    if (oldShader !== this.data.shader) {
-      var data = {
+    var data;
+    var changedShader = (oldShader && oldShader.shader) !== this.data.shader || (oldShader && oldShader.customShader) !== this.data.customShader;
+
+    if (changedShader || this.data.customShader) {
+      data = {
         side: threeSideFromString(this.data.side),
         transparent: this.data.transparent,
         alphaTest: this.data.alphaTest,
@@ -126,19 +129,18 @@ module.exports.Component = registerComponent('bmfont-text', {
         opacity: this.data.opacity,
         map: this.texture
       };
+    }
+    if (changedShader) {
       var shader;
       if (this.data.customShader) {
         var ShaderType = shaders[this.data.customShader].Shader;
-        var shaderObject = new ShaderType();
+        var shaderObject = this.shaderObject = new ShaderType();
         shaderObject.el = this.el;
         shaderObject.init(data);
-        shaderObject.update(data); // need this to initialize color in uniforms
+        shaderObject.update(data);
         shader = shaderObject.material;
         this.material = shader;
-        // update custom shader under the covers
-        this.material.uniforms.opacity.value = this.data.opacity;
-        this.material.uniforms.color.value.set(this.data.color);
-        this.material.uniforms.map.value = this.texture;
+        if (this.mesh) { this.mesh.material = this.material; }
         return;
       }
       if (this.data.shader === 'SDF') {
@@ -149,6 +151,8 @@ module.exports.Component = registerComponent('bmfont-text', {
         shader = createBasic(data);
       }
       this.material = new THREE.RawShaderMaterial(shader);
+    } else if (this.shaderObject) {
+      this.shaderObject.update(data);
     } else {
       this.material.uniforms.opacity.value = this.data.opacity;
       this.material.uniforms.color.value.set(this.data.color);
