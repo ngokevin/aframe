@@ -39,6 +39,40 @@ var fontMap = {
 var loadedFontPromises = {};
 var loadedTexturePromises = {};
 
+coreShader.registerShader('modified-SDF', {
+  schema: {
+    map: { type: 'map', is: 'uniform' },
+    color: { type: 'color', is: 'uniform', default: 'white' },
+    opacity: { type: 'number', is: 'uniform', default: 1.0 }
+  },
+  vertexShader: [
+    'varying vec2 vUV;',
+    'void main(void) {',
+    '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+    '  vUV = uv;',
+    '}'
+  ].join('\n'),
+  fragmentShader: [
+    'uniform sampler2D map;',
+    'uniform vec3 color;',
+    'uniform float opacity;',
+    'varying vec2 vUV;',
+    '#define ALL_SMOOTH 0.5',
+    '#define ALL_ROUGH 0.25',
+    'float aastep(float value) {',
+    '  float afwidth = (1.0 / 32.0) * (1.4142135623730951 / (2.0 * gl_FragCoord.w));',
+    '  float smooth = smoothstep(0.5 - afwidth, 0.5 + afwidth, value);',
+    '  float ratio = (gl_FragCoord.w >= ALL_SMOOTH) ? 1.0 : (gl_FragCoord.w < ALL_ROUGH) ? 0.0 : (gl_FragCoord.w - ALL_ROUGH) / (ALL_SMOOTH - ALL_ROUGH);',
+    '  return smooth * ratio + (1.0 - ratio) * value;',
+    '}',
+    'void main() {',
+    '  vec4 texColor = texture2D(map, vUV);',
+    '  float alpha = aastep(texColor.a);',
+    '  gl_FragColor = vec4(color, opacity * alpha);',
+    '}'
+  ].join('\n')
+});
+
 module.exports.Component = registerComponent('bmfont-text', {
   schema: {
     // scale is now determined by width and wrappixels/wrapcount... scale: {default: 0.003},
@@ -56,8 +90,8 @@ module.exports.Component = registerComponent('bmfont-text', {
     whiteSpace: {default: 'normal', oneOf: ['normal', 'pre', 'nowrap']},
     color: {type: 'color', default: '#000'},
     opacity: {type: 'number', default: '1.0'},
-    shader: {default: 'SDF', oneOf: ['SDF', 'basic', 'MSDF']},
-    customShader: {oneOf: shaderNames},
+    shader: {default: 'custom', oneOf: ['custom', 'SDF', 'basic', 'MSDF']},
+    customShader: {default: 'modified-SDF', oneOf: shaderNames},
     side: {default: 'front', oneOf: ['front', 'back', 'double']},
     transparent: {default: true},
     alphaTest: {default: 0.5},
@@ -132,7 +166,7 @@ module.exports.Component = registerComponent('bmfont-text', {
     }
     if (changedShader) {
       var shader;
-      if (this.data.customShader) {
+      if (this.data.shader === 'custom') {
         var ShaderType = shaders[this.data.customShader].Shader;
         var shaderObject = this.shaderObject = new ShaderType();
         shaderObject.el = this.el;
@@ -152,7 +186,7 @@ module.exports.Component = registerComponent('bmfont-text', {
         shader = createBasic(data);
       }
       this.material = new THREE.RawShaderMaterial(shader);
-    } else if (this.shaderObject) {
+    } else if (this.data.shader === 'custom') {
       this.shaderObject.update(data);
       this.shaderObject.material.transparent = data.transparent; // apparently this is not set on either init or update
     } else {
