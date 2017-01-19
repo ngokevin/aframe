@@ -139,6 +139,7 @@ module.exports.Component = registerComponent('bmfont-text', {
         shaderObject.init(data);
         shaderObject.update(data);
         shader = shaderObject.material;
+        shader.transparent = data.transparent; // apparently this is not set on either init or update
         this.material = shader;
         if (this.mesh) { this.mesh.material = this.material; }
         return;
@@ -153,6 +154,7 @@ module.exports.Component = registerComponent('bmfont-text', {
       this.material = new THREE.RawShaderMaterial(shader);
     } else if (this.shaderObject) {
       this.shaderObject.update(data);
+      this.shaderObject.material.transparent = data.transparent; // apparently this is not set on either init or update
     } else {
       this.material.uniforms.opacity.value = this.data.opacity;
       this.material.uniforms.color.value.set(this.data.color);
