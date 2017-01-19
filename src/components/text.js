@@ -78,7 +78,7 @@ coreShader.registerShader('modified-sdf', {
   ].join('\n')
 });
 
-module.exports.Component = registerComponent('bmfont-text', {
+module.exports.Component = registerComponent('text', {
   schema: {
     align: {type: 'string', default: 'left', oneOf: alignments},
     alphaTest: {default: 0.5},
