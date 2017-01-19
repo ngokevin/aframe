@@ -32,8 +32,8 @@ var fontMap = {
   'mozillavr': FONT_BASE_URL + 'mozillavr.fnt'
 };
 
-var loadedFontMap = {};
-var loadedTextureMap = {};
+var loadedFontPromises = {};
+var loadedTexturePromises = {};
 
 module.exports.Component = registerComponent('bmfont-text', {
   schema: {
@@ -143,6 +143,26 @@ module.exports.Component = registerComponent('bmfont-text', {
 
   lookupFont: function (keyOrUrl) { return fontMap[keyOrUrl] || keyOrUrl; },
 
+  loadBMFontPromise: function (src) {
+    var self = this;
+    return new Promise(function (resolve, reject) {
+      loadBMFont(self.lookupFont(src), function (err, font) {
+        if (err) { reject(err); } else { resolve(font); }
+      });
+    });
+  },
+
+  loadTexturePromise: function (src) {
+    return new Promise(function (resolve, reject) {
+      var loader = new THREE.ImageLoader();
+      loader.load(src, function (image) {
+        resolve(image);
+      }, undefined, function () {
+        reject(null);
+      });
+    });
+  },
+
   updateFont: function () {
     if (!this.data.font) {
       console.error(new TypeError('No font specified for bmfont text!'));
@@ -152,19 +172,8 @@ module.exports.Component = registerComponent('bmfont-text', {
     var geometry = this.geometry;
     var self = this;
     this.mesh.visible = false;
-    var loadedFont = loadedFontMap[this.data.fnt];
-    if (loadedFont) { onLoadFont(loadedFont); return; }
-    loadBMFont(this.lookupFont(this.data.font), onLoadFont);
-
-    function onLoadFont (error, font) {
-      if (error) {
-        throw new Error('Error loading font ' + self.data.font +
-          '\nMake sure the path is correct and that it points' +
-          ' to a valid BMFont file (xml, json, fnt).\n' + error.message);
-      }
-
-      loadedFontMap[self.data.fnt] = font;
-
+    var promise = loadedFontPromises[this.data.font] = loadedFontPromises[this.data.font] || this.loadBMFontPromise(this.data.font);
+    promise.then(function (font) {
       if (font.pages.length !== 1) {
         throw new Error('Currently only single-page bitmap fonts are supported.');
       }
@@ -182,18 +191,25 @@ module.exports.Component = registerComponent('bmfont-text', {
         object3D.add(self.mesh);
       }
 
-      loadTexture(src, onLoadTexture);
+      var texpromise = loadedTexturePromises[src] || self.loadTexturePromise(src);
+      texpromise.then(function (image) {
+        self.mesh.visible = true;
+        if (image) {
+          self.texture.image = image;
+          self.texture.needsUpdate = true;
+        }
+      }).catch(function () {
+        console.error('Could not load bmfont texture "' + src +
+          '"\nMake sure it is correctly defined in the bitmap .fnt file.');
+      });
+
       self.currentFont = font;
       self.updateLayout(data);
-    }
-
-    function onLoadTexture (image) {
-      self.mesh.visible = true;
-      if (image) {
-        self.texture.image = image;
-        self.texture.needsUpdate = true;
-      }
-    }
+    }).catch(function (error) {
+      throw new Error('Error loading font ' + self.data.font +
+          '\nMake sure the path is correct and that it points' +
+          ' to a valid BMFont file (xml, json, fnt).\n' + error.message);
+    });
   },
 
   updateLayout: function (data) {
@@ -246,21 +262,6 @@ module.exports.Component = registerComponent('bmfont-text', {
     this.geometry.computeBoundingSphere();
   }
 });
-
-function loadTexture (src, cb) {
-  var loadedTexture = loadedTextureMap[src];
-  if (loadedTexture) { cb(loadedTexture); return; }
-
-  var loader = new THREE.ImageLoader();
-  loader.load(src, function (image) {
-    loadedTextureMap[src] = image;
-    cb(image);
-  }, undefined, function () {
-    console.error('Could not load bmfont texture "' + src +
-      '"\nMake sure it is correctly defined in the bitmap .fnt file.');
-    cb(null);
-  });
-}
 
 function threeSideFromString (str) {
   switch (str) {
