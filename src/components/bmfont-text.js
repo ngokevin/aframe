@@ -9,6 +9,10 @@ var createSDF = require('three-bmfont-text/shaders/sdf');
 var createMSDF = require('three-bmfont-text/shaders/msdf');
 var createBasic = require('three-bmfont-text/shaders/basic');
 
+var coreShader = require('../core/shader');
+var shaders = coreShader.shaders;
+var shaderNames = coreShader.shaderNames;
+
 var alignments = ['left', 'right', 'center'];
 var anchors = ['left', 'right', 'center', 'align'];
 var baselines = ['top', 'center', 'bottom'];
@@ -53,6 +57,7 @@ module.exports.Component = registerComponent('bmfont-text', {
     color: {type: 'color', default: '#000'},
     opacity: {type: 'number', default: '1.0'},
     shader: {default: 'SDF', oneOf: ['SDF', 'basic', 'MSDF']},
+    customShader: {oneOf: shaderNames},
     side: {default: 'front', oneOf: ['front', 'back', 'double']},
     transparent: {default: true},
     alphaTest: {default: 0.5},
@@ -122,6 +127,20 @@ module.exports.Component = registerComponent('bmfont-text', {
         map: this.texture
       };
       var shader;
+      if (this.data.customShader) {
+        var ShaderType = shaders[this.data.customShader].Shader;
+        var shaderObject = new ShaderType();
+        shaderObject.el = this.el;
+        shaderObject.init(data);
+        shaderObject.update(data); // need this to initialize color in uniforms
+        shader = shaderObject.material;
+        this.material = shader;
+        // update custom shader under the covers
+        this.material.uniforms.opacity.value = this.data.opacity;
+        this.material.uniforms.color.value.set(this.data.color);
+        this.material.uniforms.map.value = this.texture;
+        return;
+      }
       if (this.data.shader === 'SDF') {
         shader = createSDF(data);
       } else if (this.data.shader === 'MSDF') {
