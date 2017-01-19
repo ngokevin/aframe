@@ -144,9 +144,8 @@ module.exports.Component = registerComponent('bmfont-text', {
   lookupFont: function (keyOrUrl) { return fontMap[keyOrUrl] || keyOrUrl; },
 
   loadBMFontPromise: function (src) {
-    var self = this;
     return new Promise(function (resolve, reject) {
-      loadBMFont(self.lookupFont(src), function (err, font) {
+      loadBMFont(src, function (err, font) {
         if (err) { reject(err); } else { resolve(font); }
       });
     });
@@ -172,7 +171,8 @@ module.exports.Component = registerComponent('bmfont-text', {
     var geometry = this.geometry;
     var self = this;
     this.mesh.visible = false;
-    var promise = loadedFontPromises[this.data.font] = loadedFontPromises[this.data.font] || this.loadBMFontPromise(this.data.font);
+    var font = this.lookupFont(this.data.font);
+    var promise = loadedFontPromises[font] = loadedFontPromises[font] || this.loadBMFontPromise(font);
     promise.then(function (font) {
       if (font.pages.length !== 1) {
         throw new Error('Currently only single-page bitmap fonts are supported.');
