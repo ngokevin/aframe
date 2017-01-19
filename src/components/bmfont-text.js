@@ -19,7 +19,7 @@ var DEFAULT_WIDTH = 1; // 1 matches other AFRAME default widths... 5 matches pri
 // of large amounts of text particularly when viewed from an angle.
 var MAX_ANISOTROPY = 16;
 
-var FONT_BASE_URL = 'https://cdn.rawgit.com/fernandojsg/aframe-bmfont-component/5c88edf40bbc88b336d7db6f040c3ae0d2f65aff/fonts/';
+var FONT_BASE_URL = 'https://cdn.aframe.io/fonts/';
 var fontMap = {
   'default': FONT_BASE_URL + 'DejaVu-sdf.fnt',
   'Aileron-Semibold': FONT_BASE_URL + 'Aileron-Semibold.fnt',
