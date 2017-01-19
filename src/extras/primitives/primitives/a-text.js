@@ -1,6 +1,5 @@
 /* Experimental text primitive.
  */
-
 var getMeshMixin = require('../getMeshMixin');
 var registerPrimitive = require('../primitives').registerPrimitive;
 var utils = require('../../../utils/');
@@ -10,19 +9,19 @@ registerPrimitive('a-text', utils.extendDeep({}, getMeshMixin(), {
     'bmfont-text': {anchor: 'align', width: 5}
   },
   mappings: {
-    text: 'bmfont-text.text',
-    width: 'bmfont-text.width',
-    height: 'bmfont-text.height',
     align: 'bmfont-text.align',
+    anchor: 'bmfont-text.anchor',
+    baseline: 'bmfont-text.baseline',
+    color: 'bmfont-text.color',
+    height: 'bmfont-text.height',
     letterspacing: 'bmfont-text.letterSpacing',
     lineheight: 'bmfont-text.lineHeight',
     fnt: 'bmfont-text.fnt',
     fntimage: 'bmfont-text.fntImage',
     mode: 'bmfont-text.mode',
-    color: 'bmfont-text.color',
     opacity: 'bmfont-text.opacity',
-    anchor: 'bmfont-text.anchor',
-    baseline: 'bmfont-text.baseline',
+    text: 'bmfont-text.text',
+    width: 'bmfont-text.width',
     wrapcount: 'bmfont-text.wrapcount',
     wrappixels: 'bmfont-text.wrappixels'
   }
