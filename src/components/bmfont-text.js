@@ -26,24 +26,26 @@ var MAX_ANISOTROPY = 16;
 var FONT_BASE_URL = 'https://cdn.aframe.io/fonts/';
 var fontMap = {
   'default': FONT_BASE_URL + 'DejaVu-sdf.fnt',
-  'Aileron-Semibold': FONT_BASE_URL + 'Aileron-Semibold.fnt',
-  'DejaVu': FONT_BASE_URL + 'DejaVu-sdf.fnt',
-  'Exo2Bold': FONT_BASE_URL + 'Exo2Bold.fnt',
-  'Exo2SemiBold': FONT_BASE_URL + 'Exo2SemiBold.fnt',
-  'KelsonSans': FONT_BASE_URL + 'KelsonSans.fnt',
-  'Monoid': FONT_BASE_URL + 'Monoid.fnt',
-  'SourceCodePro': FONT_BASE_URL + 'SourceCodePro.fnt',
-  'mozillavr': FONT_BASE_URL + 'mozillavr.fnt'
+
+  'aileronsemibold': FONT_BASE_URL + 'Aileron-Semibold.fnt',
+  'dejavu': FONT_BASE_URL + 'DejaVu-sdf.fnt',
+  'exo2bold': FONT_BASE_URL + 'Exo2Bold.fnt',
+  'exo2semibold': FONT_BASE_URL + 'Exo2SemiBold.fnt',
+  'kelsonsans': FONT_BASE_URL + 'KelsonSans.fnt',
+  'monoid': FONT_BASE_URL + 'Monoid.fnt',
+  'mozillavr': FONT_BASE_URL + 'mozillavr.fnt',
+  'sourcecodepro': FONT_BASE_URL + 'SourceCodePro.fnt'
 };
 
 var loadedFontPromises = {};
 var loadedTexturePromises = {};
 
-coreShader.registerShader('modified-SDF', {
+coreShader.registerShader('modified-sdf', {
   schema: {
-    map: { type: 'map', is: 'uniform' },
-    color: { type: 'color', is: 'uniform', default: 'white' },
-    opacity: { type: 'number', is: 'uniform', default: 1.0 }
+    alphaTest: {type: 'number', is: 'uniform', default: 0.5},
+    color: {type: 'color', is: 'uniform', default: 'white'},
+    map: {type: 'map', is: 'uniform'},
+    opacity: {type: 'number', is: 'uniform', default: 1.0}
   },
   vertexShader: [
     'varying vec2 vUV;',
@@ -53,15 +55,17 @@ coreShader.registerShader('modified-SDF', {
     '}'
   ].join('\n'),
   fragmentShader: [
+    '#define ALL_SMOOTH 0.5',
+    '#define ALL_ROUGH 0.4',
     'uniform sampler2D map;',
     'uniform vec3 color;',
     'uniform float opacity;',
+    'uniform float alphaTest;',
     'varying vec2 vUV;',
-    '#define ALL_SMOOTH 0.5',
-    '#define ALL_ROUGH 0.4',
     'float aastep(float value) {',
     '  float afwidth = (1.0 / 32.0) * (1.4142135623730951 / (2.0 * gl_FragCoord.w));',
     '  float smooth = smoothstep(0.5 - afwidth, 0.5 + afwidth, value);',
+    '  if (smooth < alphaTest) smooth = 0.0;',
     '  float ratio = (gl_FragCoord.w >= ALL_SMOOTH) ? 1.0 : (gl_FragCoord.w < ALL_ROUGH) ? 0.0 : (gl_FragCoord.w - ALL_ROUGH) / (ALL_SMOOTH - ALL_ROUGH);',
     '  return smooth * ratio + (1.0 - ratio) * value;',
     '}',
@@ -75,28 +79,34 @@ coreShader.registerShader('modified-SDF', {
 
 module.exports.Component = registerComponent('bmfont-text', {
   schema: {
-    // scale is now determined by width and wrappixels/wrapcount... scale: {default: 0.003},
-    tabSize: {default: 4},
-    anchor: {default: 'center', oneOf: anchors}, // center default to match primitives like plane; if 'align', null or undefined, same as align
-    baseline: {default: 'center', oneOf: baselines},
-    text: {type: 'string'},
-    width: {type: 'number'}, // use AFRAME units i.e. meters, not arbitrary numbers... // default to geometry width, or if not present then DEFAULT_WIDTH
-    height: {type: 'number'}, // use AFRAME units i.e. meters, not arbitrary numbers... // no default, will be populated at layout
     align: {type: 'string', default: 'left', oneOf: alignments},
-    letterSpacing: {type: 'number', default: 0},
-    lineHeight: {type: 'number'},  // default to font's lineHeight value
-    font: {type: 'string', default: 'default'},
-    fontImage: {type: 'string'}, // default to fnt but with .fnt replaced by .png
-    whiteSpace: {default: 'normal', oneOf: ['normal', 'pre', 'nowrap']},
-    color: {type: 'color', default: '#000'},
-    opacity: {type: 'number', default: '1.0'},
-    shader: {default: 'custom', oneOf: ['custom', 'SDF', 'basic', 'MSDF']},
-    customShader: {default: 'modified-SDF', oneOf: shaderNames},
-    side: {default: 'front', oneOf: ['front', 'back', 'double']},
-    transparent: {default: true},
     alphaTest: {default: 0.5},
-    wrappixels: {type: 'number'}, // if specified, units are bmfont pixels (e.g. DejaVu default is size 32)
-    wrapcount: {type: 'number', default: 40} // units are 0.6035 * font size e.g. about one default font character (monospace DejaVu size 32)
+    // center default to match primitives like plane; if 'align', null or undefined, same as align
+    anchor: {default: 'center', oneOf: anchors},
+    baseline: {default: 'center', oneOf: baselines},
+    color: {type: 'color', default: '#000'},
+    customShader: {default: 'modified-sdf', oneOf: shaderNames},
+    font: {type: 'string', default: 'default'},
+    // default to fnt but with .fnt replaced by .png
+    fontImage: {type: 'string'},
+    // no default, will be populated at layout
+    height: {type: 'number'},
+    letterSpacing: {type: 'number', default: 0},
+    // default to font's lineHeight value
+    lineHeight: {type: 'number'},
+    opacity: {type: 'number', default: '1.0'},
+    shader: {default: 'custom', oneOf: ['custom', 'sdf', 'basic', 'msdf']},
+    side: {default: 'front', oneOf: ['front', 'back', 'double']},
+    tabSize: {default: 4},
+    text: {type: 'string'},
+    transparent: {default: true},
+    whiteSpace: {default: 'normal', oneOf: ['normal', 'pre', 'nowrap']},
+    // default to geometry width, or if not present then DEFAULT_WIDTH
+    width: {type: 'number'},
+    // units are 0.6035 * font size e.g. about one default font character (monospace DejaVu size 32)
+    wrapcount: {type: 'number', default: 40},
+    // if specified, units are bmfont pixels (e.g. DejaVu default is size 32)
+    wrappixels: {type: 'number'}
   },
 
   init: function () {
@@ -133,6 +143,14 @@ module.exports.Component = registerComponent('bmfont-text', {
     this.geometry.dispose();
     this.geometry = null;
     this.el.removeObject3D('bmfont-text');
+    this.material.dispose();
+    this.material = null;
+    this.texture.dispose();
+    this.texture = null;
+    if (this.shaderObject) {
+      this.shaderObject.dispose();
+      delete this.shaderObject;
+    }
   },
 
   coerceData: function (data) {
@@ -178,9 +196,9 @@ module.exports.Component = registerComponent('bmfont-text', {
         if (this.mesh) { this.mesh.material = this.material; }
         return;
       }
-      if (this.data.shader === 'SDF') {
+      if (this.data.shader === 'sdf') {
         shader = createSDF(data);
-      } else if (this.data.shader === 'MSDF') {
+      } else if (this.data.shader === 'msdf') {
         shader = createMSDF(data);
       } else {
         shader = createBasic(data);
