@@ -58,7 +58,7 @@ coreShader.registerShader('modified-SDF', {
     'uniform float opacity;',
     'varying vec2 vUV;',
     '#define ALL_SMOOTH 0.5',
-    '#define ALL_ROUGH 0.25',
+    '#define ALL_ROUGH 0.4',
     'float aastep(float value) {',
     '  float afwidth = (1.0 / 32.0) * (1.4142135623730951 / (2.0 * gl_FragCoord.w));',
     '  float smooth = smoothstep(0.5 - afwidth, 0.5 + afwidth, value);',
