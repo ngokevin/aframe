@@ -57,6 +57,7 @@ coreShader.registerShader('modified-sdf', {
   fragmentShader: [
     '#define ALL_SMOOTH 0.5',
     '#define ALL_ROUGH 0.4',
+    '#define DISCARD_ALPHA 0.1',
     'uniform sampler2D map;',
     'uniform vec3 color;',
     'uniform float opacity;',
@@ -73,6 +74,7 @@ coreShader.registerShader('modified-sdf', {
     '  float ratio = (gl_FragCoord.w >= ALL_SMOOTH) ? 1.0 : (gl_FragCoord.w < ALL_ROUGH) ? 0.0 : (gl_FragCoord.w - ALL_ROUGH) / (ALL_SMOOTH - ALL_ROUGH);',
     '  if (alpha < alphaTest) { if (ratio >= 1.0) { discard; return; } alpha = 0.0; }',
     '  alpha = alpha * ratio + (1.0 - ratio) * value;',
+    '  if (ratio < 1.0 && alpha <= DISCARD_ALPHA) { discard; return; }',
     '  gl_FragColor = vec4(color, opacity * alpha);',
     '}'
   ].join('\n')
