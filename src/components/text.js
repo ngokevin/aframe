@@ -40,6 +40,8 @@ var loadedFontPromises = {};
 var loadedTexturePromises = {};
 
 module.exports.Component = registerComponent('text', {
+  multiple: true,
+
   schema: {
     align: {type: 'string', default: 'left', oneOf: alignments},
     alphaTest: {default: 0.5},
