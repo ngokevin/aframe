@@ -11,7 +11,6 @@ var createBasic = require('three-bmfont-text/shaders/basic');
 
 var coreShader = require('../core/shader');
 var shaders = coreShader.shaders;
-var shaderNames = coreShader.shaderNames;
 
 var alignments = ['left', 'right', 'center'];
 var anchors = ['left', 'right', 'center', 'align'];
@@ -40,46 +39,6 @@ var fontMap = {
 var loadedFontPromises = {};
 var loadedTexturePromises = {};
 
-coreShader.registerShader('modified-sdf', {
-  schema: {
-    alphaTest: {type: 'number', is: 'uniform', default: 0.5},
-    color: {type: 'color', is: 'uniform', default: 'white'},
-    map: {type: 'map', is: 'uniform'},
-    opacity: {type: 'number', is: 'uniform', default: 1.0}
-  },
-  vertexShader: [
-    'varying vec2 vUV;',
-    'void main(void) {',
-    '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
-    '  vUV = uv;',
-    '}'
-  ].join('\n'),
-  fragmentShader: [
-    '#define ALL_SMOOTH 0.5',
-    '#define ALL_ROUGH 0.4',
-    '#define DISCARD_ALPHA 0.1',
-    'uniform sampler2D map;',
-    'uniform vec3 color;',
-    'uniform float opacity;',
-    'uniform float alphaTest;',
-    'varying vec2 vUV;',
-    'float aastep(float value) {',
-    '  float afwidth = (1.0 / 32.0) * (1.4142135623730951 / (2.0 * gl_FragCoord.w));',
-    '  return smoothstep(0.5 - afwidth, 0.5 + afwidth, value);',
-    '}',
-    'void main() {',
-    '  vec4 texColor = texture2D(map, vUV);',
-    '  float value = texColor.a;',
-    '  float alpha = aastep(value);',
-    '  float ratio = (gl_FragCoord.w >= ALL_SMOOTH) ? 1.0 : (gl_FragCoord.w < ALL_ROUGH) ? 0.0 : (gl_FragCoord.w - ALL_ROUGH) / (ALL_SMOOTH - ALL_ROUGH);',
-    '  if (alpha < alphaTest) { if (ratio >= 1.0) { discard; return; } alpha = 0.0; }',
-    '  alpha = alpha * ratio + (1.0 - ratio) * value;',
-    '  if (ratio < 1.0 && alpha <= DISCARD_ALPHA) { discard; return; }',
-    '  gl_FragColor = vec4(color, opacity * alpha);',
-    '}'
-  ].join('\n')
-});
-
 module.exports.Component = registerComponent('text', {
   schema: {
     align: {type: 'string', default: 'left', oneOf: alignments},
@@ -88,7 +47,6 @@ module.exports.Component = registerComponent('text', {
     anchor: {default: 'center', oneOf: anchors},
     baseline: {default: 'center', oneOf: baselines},
     color: {type: 'color', default: '#000'},
-    customShader: {default: 'modified-sdf', oneOf: shaderNames},
     font: {type: 'string', default: 'default'},
     // default to fnt but with .fnt replaced by .png
     fontImage: {type: 'string'},
@@ -98,7 +56,7 @@ module.exports.Component = registerComponent('text', {
     // default to font's lineHeight value
     lineHeight: {type: 'number'},
     opacity: {type: 'number', default: '1.0'},
-    shader: {default: 'custom', oneOf: ['custom', 'sdf', 'basic', 'msdf']},
+    shader: {default: 'modified-sdf', oneOf: ['modified-sdf', 'sdf', 'basic', 'msdf']},
     side: {default: 'front', oneOf: ['front', 'back', 'double']},
     tabSize: {default: 4},
     text: {type: 'string'},
@@ -139,7 +97,7 @@ module.exports.Component = registerComponent('text', {
       this.updateLayout(data);
     }
     // if shader changed, update
-    this.updateMaterial(oldData && {shader: oldData.shader, customShader: oldData.customShader});
+    this.updateMaterial(oldData && {shader: oldData.shader});
   },
 
   remove: function () {
@@ -157,9 +115,10 @@ module.exports.Component = registerComponent('text', {
 
   updateMaterial: function (oldShader) {
     var data;
-    var changedShader = (oldShader && oldShader.shader) !== this.data.shader || (oldShader && oldShader.customShader) !== this.data.customShader;
+    var changedShader = (oldShader && oldShader.shader) !== this.data.shader;
+    var customShader = this.data.shader === 'modified-sdf';
 
-    if (changedShader || this.data.customShader) {
+    if (changedShader || customShader) {
       data = {
         side: threeSideFromString(this.data.side),
         transparent: this.data.transparent,
@@ -171,8 +130,8 @@ module.exports.Component = registerComponent('text', {
     }
     if (changedShader) {
       var shader;
-      if (this.data.shader === 'custom') {
-        var ShaderType = shaders[this.data.customShader].Shader;
+      if (customShader) {
+        var ShaderType = shaders[this.data.shader].Shader;
         var shaderObject = this.shaderObject = new ShaderType();
         shaderObject.el = this.el;
         shaderObject.init(data);
@@ -191,7 +150,7 @@ module.exports.Component = registerComponent('text', {
         shader = createBasic(data);
       }
       this.material = new THREE.RawShaderMaterial(shader);
-    } else if (this.data.shader === 'custom') {
+    } else if (customShader) {
       this.shaderObject.update(data);
       this.shaderObject.material.transparent = data.transparent; // apparently this is not set on either init or update
     } else {
