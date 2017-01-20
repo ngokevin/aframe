@@ -149,7 +149,6 @@ module.exports.Component = registerComponent('text', {
     this.texture.dispose();
     this.texture = null;
     if (this.shaderObject) {
-      this.shaderObject.dispose();
       delete this.shaderObject;
     }
   },
