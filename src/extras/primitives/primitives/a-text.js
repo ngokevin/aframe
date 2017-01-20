@@ -22,7 +22,7 @@ registerPrimitive('a-text', utils.extendDeep({}, getMeshMixin(), {
     opacity: 'text.opacity',
     text: 'text.text',
     width: 'text.width',
-    wrapcount: 'text.wrapcount',
-    wrappixels: 'text.wrappixels'
+    wrapcount: 'text.wrapCount',
+    wrappixels: 'text.wrapPixels'
   }
 }));
