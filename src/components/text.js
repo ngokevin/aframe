@@ -107,9 +107,9 @@ module.exports.Component = registerComponent('text', {
     // default to geometry width, or if not present then DEFAULT_WIDTH
     width: {type: 'number'},
     // units are 0.6035 * font size e.g. about one default font character (monospace DejaVu size 32)
-    wrapcount: {type: 'number', default: 40},
+    wrapCount: {type: 'number', default: 40},
     // if specified, units are bmfont pixels (e.g. DejaVu default is size 32)
-    wrappixels: {type: 'number'}
+    wrapPixels: {type: 'number'}
   },
 
   init: function () {
@@ -133,7 +133,7 @@ module.exports.Component = registerComponent('text', {
     } else if (this.currentFont) {
       // new data like change of text string
       var font = this.currentFont;
-      var textRenderWidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
+      var textRenderWidth = data.wrapPixels || (data.wrapCount * 0.6035 * font.info.size);
       var options = assign({}, data, { font: font, width: textRenderWidth, lineHeight: data.lineHeight || font.common.lineHeight });
       this.geometry.update(options);
       this.updateLayout(data);
@@ -221,7 +221,7 @@ module.exports.Component = registerComponent('text', {
 
       // Update geometry given font metrics.
       var data = coerceData(self.data);
-      var textRenderWidth = data.wrappixels || (data.wrapcount * 0.6035 * loadedFont.info.size);
+      var textRenderWidth = data.wrapPixels || (data.wrapCount * 0.6035 * loadedFont.info.size);
       var options = assign({}, data, { font: loadedFont, width: textRenderWidth, lineHeight: data.lineHeight || loadedFont.common.lineHeight });
       var object3D;
       geometry.update(options);
@@ -276,7 +276,7 @@ module.exports.Component = registerComponent('text', {
     width = data.width || (elGeo && elGeo.width) || DEFAULT_WIDTH;
     // Determine wrap pixel count, either as specified or by experimentally determined fudge factor.
     // (Note that experimentally determined factor will never be correct for variable width fonts.)
-    textRenderWidth = data.wrappixels || (data.wrapcount * 0.6035 * font.info.size);
+    textRenderWidth = data.wrapPixels || (data.wrapCount * 0.6035 * font.info.size);
     textScale = width / textRenderWidth;
     // Determine height to use.
     height = textScale * geometry.layout.height;
