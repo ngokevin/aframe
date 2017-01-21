@@ -20,7 +20,7 @@ registerPrimitive('a-text', utils.extendDeep({}, getMeshMixin(), {
     fontimage: 'text.fontImage',
     mode: 'text.mode',
     opacity: 'text.opacity',
-    value: 'text.text',
+    value: 'text.value',
     width: 'text.width',
     wrapcount: 'text.wrapCount',
     wrappixels: 'text.wrapPixels'
