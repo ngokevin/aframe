@@ -61,8 +61,8 @@ module.exports.Component = registerComponent('text', {
     shader: {default: 'modified-sdf', oneOf: ['modified-sdf', 'sdf', 'basic', 'msdf']},
     side: {default: 'front', oneOf: ['front', 'back', 'double']},
     tabSize: {default: 4},
-    text: {type: 'string'},
     transparent: {default: true},
+    value: {type: 'string'},
     whiteSpace: {default: 'normal', oneOf: ['normal', 'pre', 'nowrap']},
     // default to geometry width, or if not present then DEFAULT_WIDTH
     width: {type: 'number'},
@@ -94,7 +94,7 @@ module.exports.Component = registerComponent('text', {
       // new data like change of text string
       var font = this.currentFont;
       var textRenderWidth = data.wrapPixels || (data.wrapCount * 0.6035 * font.info.size);
-      var options = assign({}, data, { font: font, width: textRenderWidth, lineHeight: data.lineHeight || font.common.lineHeight });
+      var options = assign({}, data, { text: data.value, font: font, width: textRenderWidth, lineHeight: data.lineHeight || font.common.lineHeight });
       this.geometry.update(options);
       this.updateLayout(data);
     }
@@ -183,7 +183,7 @@ module.exports.Component = registerComponent('text', {
       // Update geometry given font metrics.
       var data = coerceData(self.data);
       var textRenderWidth = data.wrapPixels || (data.wrapCount * 0.6035 * loadedFont.info.size);
-      var options = assign({}, data, { font: loadedFont, width: textRenderWidth, lineHeight: data.lineHeight || loadedFont.common.lineHeight });
+      var options = assign({}, data, { text: data.value, font: loadedFont, width: textRenderWidth, lineHeight: data.lineHeight || loadedFont.common.lineHeight });
       var object3D;
       geometry.update(options);
       self.mesh.geometry = geometry;

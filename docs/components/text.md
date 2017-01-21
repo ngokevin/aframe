@@ -35,8 +35,8 @@ so it could be use in WebVR without compromising performance.
 | shader        | Shader to render text. (modified-sdf, sdf, basic, msdf) | modified-sdf          |
 | side          | Side to render. (front, back, double)                   | front                 |
 | tabSize       | Tab size, in spaces.                                    | 4                     |
-| text          | The text to render.                                     |                       |
 | transparent   | Should text be transparent?                             | true                  |
+| value         | The text to render.                                     |                       |
 | whitespace    | How should whitespace be handled? (normal, pre, nowrap) | normal                |
 | width         | Width (default = geometry width, DEFAULT_WIDTH if none) |                       |
 | wrapCount     | Wrap after this many font characters (more or less).    | 40                    |
