@@ -38,6 +38,7 @@ var fontMap = {
 
 var loadedFontPromises = {};
 var loadedTexturePromises = {};
+var loadedFontWidthFactors = {};
 
 module.exports.Component = registerComponent('text', {
   multiple: true,
@@ -66,7 +67,7 @@ module.exports.Component = registerComponent('text', {
     whiteSpace: {default: 'normal', oneOf: ['normal', 'pre', 'nowrap']},
     // default to geometry width, or if not present then DEFAULT_WIDTH
     width: {type: 'number'},
-    // units are 0.6035 * font size e.g. about one default font character (monospace DejaVu size 32)
+    // units are roughly one default font character (e.g. wrap after roughly this many characters)
     wrapCount: {type: 'number', default: 40},
     // if specified, units are bmfont pixels (e.g. DejaVu default is size 32)
     wrapPixels: {type: 'number'}
@@ -93,7 +94,7 @@ module.exports.Component = registerComponent('text', {
     } else if (this.currentFont) {
       // new data like change of text string
       var font = this.currentFont;
-      var textRenderWidth = data.wrapPixels || (data.wrapCount * 0.6035 * font.info.size);
+      var textRenderWidth = data.wrapPixels || ((0.5 + data.wrapCount) * font.widthFactor);
       var options = assign({}, data, { text: data.value, font: font, width: textRenderWidth, lineHeight: data.lineHeight || font.common.lineHeight });
       this.geometry.update(options);
       this.updateLayout(data);
@@ -180,9 +181,24 @@ module.exports.Component = registerComponent('text', {
         throw new Error('Currently only single-page bitmap fonts are supported.');
       }
 
+      if (!loadedFontWidthFactors[font]) {
+        // Compute default font width factor to use.
+        var sum = 0;
+        var digitsum = 0;
+        var digits = 0;
+        loadedFont.chars.map(function (ch) {
+          sum += ch.xadvance;
+          if (ch.id >= 48 && ch.id <= 57) {
+            digits++;
+            digitsum += ch.xadvance;
+          }
+        });
+        loadedFont.widthFactor = loadedFontWidthFactors[font] = digits ? digitsum / digits : sum / loadedFont.chars.length;
+      }
+
       // Update geometry given font metrics.
       var data = coerceData(self.data);
-      var textRenderWidth = data.wrapPixels || (data.wrapCount * 0.6035 * loadedFont.info.size);
+      var textRenderWidth = data.wrapPixels || ((0.5 + data.wrapCount) * loadedFont.widthFactor);
       var options = assign({}, data, { text: data.value, font: loadedFont, width: textRenderWidth, lineHeight: data.lineHeight || loadedFont.common.lineHeight });
       var object3D;
       geometry.update(options);
@@ -237,7 +253,7 @@ module.exports.Component = registerComponent('text', {
     width = data.width || (elGeo && elGeo.width) || DEFAULT_WIDTH;
     // Determine wrap pixel count, either as specified or by experimentally determined fudge factor.
     // (Note that experimentally determined factor will never be correct for variable width fonts.)
-    textRenderWidth = data.wrapPixels || (data.wrapCount * 0.6035 * font.info.size);
+    textRenderWidth = data.wrapPixels || ((0.5 + data.wrapCount) * font.widthFactor);
     textScale = width / textRenderWidth;
     // Determine height to use.
     height = textScale * geometry.layout.height;
