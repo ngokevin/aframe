@@ -1,12 +1,16 @@
 var registerShader = require('../core/shader').registerShader;
 
-module.exports.Shader = registerShader('modified-sdf', {
+/**
+ * Used by text component.
+ */
+module.exports.Shader = registerShader('modifiedsdf', {
   schema: {
     alphaTest: {type: 'number', is: 'uniform', default: 0.5},
     color: {type: 'color', is: 'uniform', default: 'white'},
     map: {type: 'map', is: 'uniform'},
     opacity: {type: 'number', is: 'uniform', default: 1.0}
   },
+
   vertexShader: [
     'varying vec2 vUV;',
     'void main(void) {',
@@ -14,6 +18,7 @@ module.exports.Shader = registerShader('modified-sdf', {
     '  vUV = uv;',
     '}'
   ].join('\n'),
+
   fragmentShader: [
     '#define ALL_SMOOTH 0.5',
     '#define ALL_ROUGH 0.4',

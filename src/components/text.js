@@ -1,75 +1,79 @@
-var registerComponent = require('../core/component').registerComponent;
-var THREE = require('../lib/three');
-
 var createTextGeometry = require('three-bmfont-text');
 var loadBMFont = require('load-bmfont');
 var path = require('path');
-var assign = require('object-assign');
-var createSDF = require('three-bmfont-text/shaders/sdf');
-var createMSDF = require('three-bmfont-text/shaders/msdf');
 var createBasic = require('three-bmfont-text/shaders/basic');
+var createMSDF = require('three-bmfont-text/shaders/msdf');
+var createSDF = require('three-bmfont-text/shaders/sdf');
 
+var registerComponent = require('../core/component').registerComponent;
 var coreShader = require('../core/shader');
+var THREE = require('../lib/three');
+var utils = require('../utils/');
+
 var shaders = coreShader.shaders;
+var warn = utils.debug('components:text:warn');
 
-var alignments = ['left', 'right', 'center'];
-var anchors = ['left', 'right', 'center', 'align'];
-var baselines = ['top', 'center', 'bottom'];
+// 1 to match other A-Frame default widths.
+var DEFAULT_WIDTH = 1;
 
-var DEFAULT_WIDTH = 1; // 1 matches other AFRAME default widths... 5 matches prior bmfont examples etc.
-
-// @bryik set anisotropy to 16 because I think it improves the look
-// of large amounts of text particularly when viewed from an angle.
+// @bryik set anisotropy to 16. Improves look of large amounts of text when viewed from angle.
 var MAX_ANISOTROPY = 16;
 
 var FONT_BASE_URL = 'https://cdn.aframe.io/fonts/';
-var fontMap = {
-  'default': FONT_BASE_URL + 'DejaVu-sdf.fnt',
-
-  'aileronsemibold': FONT_BASE_URL + 'Aileron-Semibold.fnt',
-  'dejavu': FONT_BASE_URL + 'DejaVu-sdf.fnt',
-  'exo2bold': FONT_BASE_URL + 'Exo2Bold.fnt',
-  'exo2semibold': FONT_BASE_URL + 'Exo2SemiBold.fnt',
-  'kelsonsans': FONT_BASE_URL + 'KelsonSans.fnt',
-  'monoid': FONT_BASE_URL + 'Monoid.fnt',
-  'mozillavr': FONT_BASE_URL + 'mozillavr.fnt',
-  'sourcecodepro': FONT_BASE_URL + 'SourceCodePro.fnt'
+var FONTS = {
+  aileronsemibold: FONT_BASE_URL + 'Aileron-Semibold.fnt',
+  default: FONT_BASE_URL + 'DejaVu-sdf.fnt',
+  dejavu: FONT_BASE_URL + 'DejaVu-sdf.fnt',
+  exo2bold: FONT_BASE_URL + 'Exo2Bold.fnt',
+  exo2semibold: FONT_BASE_URL + 'Exo2SemiBold.fnt',
+  kelsonsans: FONT_BASE_URL + 'KelsonSans.fnt',
+  monoid: FONT_BASE_URL + 'Monoid.fnt',
+  mozillavr: FONT_BASE_URL + 'mozillavr.fnt',
+  sourcecodepro: FONT_BASE_URL + 'SourceCodePro.fnt'
 };
 
-var loadedFontPromises = {};
-var loadedTexturePromises = {};
-var loadedFontWidthFactors = {};
+var cache = new PromiseCache();
+var fontWidthFactors = {};
 
+/**
+ * SDF-based text component.
+ * Based on https://github.com/Jam3/three-bmfont-text.
+ *
+ * Comes with several shaders:
+ *   All the stock fonts are for `sdf` and `modifiedsdf`. We added `modifiedsdf` shader to
+ *   improve jam3's original `sdf` shader. `msdf` and `basic` are available for the fonts that
+ *   use those.
+ */
 module.exports.Component = registerComponent('text', {
   multiple: true,
 
   schema: {
-    align: {type: 'string', default: 'left', oneOf: alignments},
+    align: {type: 'string', default: 'left', oneOf: ['left', 'right', 'center']},
     alphaTest: {default: 0.5},
-    // center default to match primitives like plane; if 'align', null or undefined, same as align
-    anchor: {default: 'center', oneOf: anchors},
-    baseline: {default: 'center', oneOf: baselines},
-    color: {type: 'color', default: '#000'},
+    // `anchor` defaults to center to match geometries.
+    anchor: {default: 'center', oneOf: ['left', 'right', 'center', 'align']},
+    baseline: {default: 'center', oneOf: ['top', 'center', 'bottom']},
+    color: {type: 'color', default: '#FFF'},
     font: {type: 'string', default: 'default'},
-    // default to fnt but with .fnt replaced by .png
+    // `fontImage` defaults to the font name as a .png (e.g., mozillavr.fnt -> mozillavr.png).
     fontImage: {type: 'string'},
-    // no default, will be populated at layout
+    // `height` has no default, will be populated at layout.
     height: {type: 'number'},
     letterSpacing: {type: 'number', default: 0},
-    // default to font's lineHeight value
+    // `lineHeight` defaults to font's `lineHeight` value.
     lineHeight: {type: 'number'},
     opacity: {type: 'number', default: '1.0'},
-    shader: {default: 'modified-sdf', oneOf: ['modified-sdf', 'sdf', 'basic', 'msdf']},
+    shader: {default: 'modifiedsdf', oneOf: ['modifiedsdf', 'sdf', 'basic', 'msdf']},
     side: {default: 'front', oneOf: ['front', 'back', 'double']},
     tabSize: {default: 4},
     transparent: {default: true},
     value: {type: 'string'},
     whiteSpace: {default: 'normal', oneOf: ['normal', 'pre', 'nowrap']},
-    // default to geometry width, or if not present then DEFAULT_WIDTH
+    // `width` defaults to geometry width if present, else `DEFAULT_WIDTH`.
     width: {type: 'number'},
-    // units are roughly one default font character (e.g. wrap after roughly this many characters)
+    // `wrapCount` units are about one default font character. Wrap roughly at this number.
     wrapCount: {type: 'number', default: 40},
-    // if specified, units are bmfont pixels (e.g. DejaVu default is size 32)
+    // `wrapPixels` will wrap using bmfont pixel units (e.g., dejavu's is 32 pixels).
     wrapPixels: {type: 'number'}
   },
 
@@ -79,34 +83,45 @@ module.exports.Component = registerComponent('text', {
 
     this.geometry = createTextGeometry();
 
-    this.updateMaterial();
+    this.createOrUpdateMaterial();
     this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.el.setObject3D('bmfont-text', this.mesh);
+    this.el.setObject3D('text', this.mesh);
   },
 
   update: function (oldData) {
     var data = coerceData(this.data);
+    var font = this.currentFont;
 
-    // decide whether to update font, or just text data
-    if (!oldData || oldData.font !== data.font) {
-      // new font, will also subsequently change data & layout
+    // Update material.
+    if (Object.keys(oldData).length) {
+      this.createOrUpdateMaterial(oldData && {shader: oldData.shader});
+    }
+
+    // New font. `updateFont` will later change data and layout.
+    if (oldData.font !== data.font) {
       this.updateFont();
-    } else if (this.currentFont) {
-      // new data like change of text string
-      var font = this.currentFont;
-      var textRenderWidth = data.wrapPixels || ((0.5 + data.wrapCount) * font.widthFactor);
-      var options = assign({}, data, { text: data.value, font: font, width: textRenderWidth, lineHeight: data.lineHeight || font.common.lineHeight });
-      this.geometry.update(options);
+      return;
+    }
+
+    // Update geometry and layout.
+    if (font) {
+      this.geometry.update(utils.extend({}, data, {
+        font: font,
+        lineHeight: data.lineHeight || font.common.lineHeight,
+        text: data.value,
+        width: data.wrapPixels || ((0.5 + data.wrapCount) * font.widthFactor)
+      }));
       this.updateLayout(data);
     }
-    // if shader changed, update
-    this.updateMaterial(oldData && {shader: oldData.shader});
   },
 
+  /**
+   * Clean up geometry, material, texture, mesh, objects.
+   */
   remove: function () {
     this.geometry.dispose();
     this.geometry = null;
-    this.el.removeObject3D('bmfont-text');
+    this.el.removeObject3D('text');
     this.material.dispose();
     this.material = null;
     this.texture.dispose();
@@ -116,90 +131,112 @@ module.exports.Component = registerComponent('text', {
     }
   },
 
-  updateMaterial: function (oldShader) {
-    var data;
-    var changedShader = (oldShader && oldShader.shader) !== this.data.shader;
-    var customShader = this.data.shader === 'modified-sdf';
+  /**
+   * Update the shader of the material.
+   *
+   * @param {object} oldShader - Object describing the previous properties of the shader.
+   *   Currently only contains the shader name, but other properties could be introduced
+   *   in order to provide heuristics to select the most appropriate type of shader based
+   *   on the text component properties.
+   */
+  createOrUpdateMaterial: function (oldShader) {
+    var data = this.data;
+    var hasChangedShader;
+    var ModifiedSDFShader;
+    var material = this.material;
+    var shaderData;
 
-    if (changedShader || customShader) {
-      data = {
-        side: threeSideFromString(this.data.side),
-        transparent: this.data.transparent,
-        alphaTest: this.data.alphaTest,
-        color: this.data.color,
-        opacity: this.data.opacity,
-        map: this.texture
-      };
-    }
-    if (changedShader) {
-      var shader;
-      if (customShader) {
-        var ShaderType = shaders[this.data.shader].Shader;
-        var shaderObject = this.shaderObject = new ShaderType();
-        shaderObject.el = this.el;
-        shaderObject.init(data);
-        shaderObject.update(data);
-        shader = shaderObject.material;
-        shader.transparent = data.transparent; // apparently this is not set on either init or update
-        this.material = shader;
-        if (this.mesh) { this.mesh.material = this.material; }
-        return;
-      }
-      if (this.data.shader === 'sdf') {
-        shader = createSDF(data);
-      } else if (this.data.shader === 'msdf') {
-        shader = createMSDF(data);
+    hasChangedShader = (oldShader && oldShader.shader) !== data.shader;
+    shaderData = {
+      alphaTest: data.alphaTest,
+      color: data.color,
+      map: this.texture,
+      opacity: data.opacity,
+      side: parseSide(data.side),
+      transparent: data.transparent
+    };
+
+    // Shader has not changed, do an update.
+    if (!hasChangedShader) {
+      if (data.shader === 'modifiedsdf') {
+        // Update modifiedsdf shader material.
+        this.shaderObject.update(shaderData);
+        // Apparently, was not set on `init` nor `update`.
+        material.transparent = shaderData.transparent;
       } else {
-        shader = createBasic(data);
+        // Update other shader materials.
+        material.uniforms.opacity.value = data.opacity;
+        material.uniforms.color.value.set(data.color);
+        material.uniforms.map.value = this.texture;
       }
-      this.material = new THREE.RawShaderMaterial(shader);
-    } else if (customShader) {
-      this.shaderObject.update(data);
-      this.shaderObject.material.transparent = data.transparent; // apparently this is not set on either init or update
-    } else {
-      this.material.uniforms.opacity.value = this.data.opacity;
-      this.material.uniforms.color.value.set(this.data.color);
-      this.material.uniforms.map.value = this.texture;
+      updateBaseMaterial(material, shaderData);
+      return;
     }
 
+    // Shader has changed. Create a shader material.
+    if (data.shader === 'modifiedsdf') {
+      ModifiedSDFShader = createModifiedSDFShader(this.el, shaderData);
+      this.material = ModifiedSDFShader.material;
+      this.shaderObject = ModifiedSDFShader.shader;
+    } else if (data.shader === 'sdf') {
+      this.material = new THREE.RawShaderMaterial(createSDF(shaderData));
+    } else if (data.shader === 'msdf') {
+      this.material = new THREE.RawShaderMaterial(createMSDF(shaderData));
+    } else {
+      this.material = new THREE.RawShaderMaterial(createBasic(shaderData));
+    }
+
+    // Set new shader material.
+    updateBaseMaterial(this.material, shaderData);
     if (this.mesh) { this.mesh.material = this.material; }
   },
 
+  /**
+   * Fetch and apply font.
+   */
   updateFont: function () {
-    if (!this.data.font) {
-      console.warn('No font specified for bmfont text, using default');
-    }
+    var fontSrc;
     var geometry = this.geometry;
     var self = this;
+
+    if (!this.data.font) {
+      warn('No font specified for `text`. Using the default font.');
+    }
     this.mesh.visible = false;
 
     // Look up font URL to use, and perform cached load.
-    var font = lookupFont(this.data.font || 'default');
-    var promise = loadedFontPromises[font] = loadedFontPromises[font] || loadBMFontPromise(font);
-    promise.then(function (loadedFont) {
-      if (loadedFont.pages.length !== 1) {
+    fontSrc = lookupFont(this.data.font || 'default');
+    cache.get(fontSrc, function () { return loadFont(fontSrc); }).then(function (font) {
+      var fontImgSrc;
+
+      if (font.pages.length !== 1) {
         throw new Error('Currently only single-page bitmap fonts are supported.');
       }
 
-      if (!loadedFontWidthFactors[font]) {
+      if (!fontWidthFactors[fontSrc]) {
         // Compute default font width factor to use.
         var sum = 0;
         var digitsum = 0;
         var digits = 0;
-        loadedFont.chars.map(function (ch) {
+        font.chars.map(function (ch) {
           sum += ch.xadvance;
           if (ch.id >= 48 && ch.id <= 57) {
             digits++;
             digitsum += ch.xadvance;
           }
         });
-        loadedFont.widthFactor = loadedFontWidthFactors[font] = digits ? digitsum / digits : sum / loadedFont.chars.length;
+        font.widthFactor = fontWidthFactors[font] = digits ? digitsum / digits : sum / font.chars.length;
       }
 
       // Update geometry given font metrics.
       var data = coerceData(self.data);
-      var textRenderWidth = data.wrapPixels || ((0.5 + data.wrapCount) * loadedFont.widthFactor);
-      var options = assign({}, data, { text: data.value, font: loadedFont, width: textRenderWidth, lineHeight: data.lineHeight || loadedFont.common.lineHeight });
+      var textRenderWidth = data.wrapPixels || ((0.5 + data.wrapCount) * font.widthFactor);
+      var options = utils.extend({}, data, {
+        text: data.value,
+        font: font,
+        width: textRenderWidth,
+        lineHeight: data.lineHeight || font.common.lineHeight
+      });
       var object3D;
       geometry.update(options);
       self.mesh.geometry = geometry;
@@ -211,21 +248,22 @@ module.exports.Component = registerComponent('text', {
       }
 
       // Look up font image URL to use, and perform cached load.
-      var src = self.data.fontImage || font.replace('.fnt', '.png') || path.dirname(data.font) + '/' + loadedFont.pages[0];
-      var texpromise = loadedTexturePromises[src] || loadTexturePromise(src);
-      texpromise.then(function (image) {
+      fontImgSrc = self.data.fontImage || fontSrc.replace('.fnt', '.png') ||
+                   path.dirname(data.font) + '/' + font.pages[0];
+      cache.get(fontImgSrc, function () {
+        return loadTexture(fontImgSrc);
+      }).then(function (image) {
         // Make mesh visible and apply font image as texture.
         self.mesh.visible = true;
-        if (image) {
-          self.texture.image = image;
-          self.texture.needsUpdate = true;
-        }
+        if (!image) { return; }
+        self.texture.image = image;
+        self.texture.needsUpdate = true;
       }).catch(function () {
-        console.error('Could not load bmfont texture "' + src +
+        console.error('Could not load font texture "' + fontImgSrc +
           '"\nMake sure it is correctly defined in the bitmap .fnt file.');
       });
 
-      self.currentFont = loadedFont;
+      self.currentFont = font;
       self.updateLayout(data);
     }).catch(function (error) {
       throw new Error('Error loading font ' + self.data.font +
@@ -297,28 +335,38 @@ module.exports.Component = registerComponent('text', {
   }
 });
 
-function registerFont (key, url) { fontMap[key] = url; }
+function registerFont (key, url) {
+  FONTS[key] = url;
+}
 module.exports.registerFont = registerFont;
 
-function unregisterFont (key) { delete fontMap[key]; }
+function unregisterFont (key) {
+  delete FONTS[key];
+}
 module.exports.unregisterFont = unregisterFont;
 
-function lookupFont (keyOrUrl) { return fontMap[keyOrUrl] || keyOrUrl; }
+function lookupFont (keyOrUrl) {
+  return FONTS[keyOrUrl] || keyOrUrl;
+}
 
-function threeSideFromString (str) {
-  switch (str) {
-    case 'double': { return THREE.DoubleSide; }
-    case 'front': { return THREE.FrontSide; }
-    case 'back': { return THREE.BackSide; }
-    default:
-      throw new TypeError('Unknown side string ' + str);
+function parseSide (side) {
+  switch (side) {
+    case 'back': {
+      return THREE.BackSide;
+    }
+    case 'double': {
+      return THREE.DoubleSide;
+    }
+    default: {
+      return THREE.FrontSide;
+    }
   }
 }
 
 function coerceData (data) {
   // We have to coerce some data to numbers/booleans,
   // as they will be passed directly into text creation and update
-  data = assign({}, data);
+  data = utils.clone(data);
   if (data.lineHeight !== undefined) {
     data.lineHeight = parseFloat(data.lineHeight);
     if (!isFinite(data.lineHeight)) { data.lineHeight = undefined; }
@@ -330,15 +378,25 @@ function coerceData (data) {
   return data;
 }
 
-function loadBMFontPromise (src) {
+/**
+ * @returns {Promise}
+ */
+function loadFont (src) {
   return new Promise(function (resolve, reject) {
     loadBMFont(src, function (err, font) {
-      if (err) { reject(err); } else { resolve(font); }
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(font);
     });
   });
 }
 
-function loadTexturePromise (src) {
+/**
+ * @returns {Promise}
+ */
+function loadTexture (src) {
   return new Promise(function (resolve, reject) {
     new THREE.ImageLoader().load(src, function (image) {
       resolve(image);
@@ -346,4 +404,48 @@ function loadTexturePromise (src) {
       reject(null);
     });
   });
+}
+
+function createModifiedSDFShader (el, data) {
+  var shader;
+  var shaderObject;
+
+  // Set up Shader.
+  shaderObject = new shaders.modifiedsdf.Shader();
+  shaderObject.el = el;
+  shaderObject.init(data);
+  shaderObject.update(data);
+
+  // Get material.
+  shader = shaderObject.material;
+  // Apparently, was not set on `init` nor `update`.
+  shader.transparent = data.transparent;
+
+  return {
+    material: shader,
+    shader: shaderObject
+  };
+}
+
+/**
+ * @todo Add more supported material properties (e.g., `visible`).
+ */
+function updateBaseMaterial (material, data) {
+  material.side = data.side;
+}
+
+/**
+ * Get or create a promise given a key and promise generator.
+ * @todo Move to a utility and use in other parts of A-Frame.
+ */
+function PromiseCache () {
+  var cache = this.cache = {};
+
+  this.get = function (key, promiseGenerator) {
+    if (key in cache) {
+      return cache[key];
+    }
+    cache[key] = promiseGenerator();
+    return cache[key];
+  };
 }
