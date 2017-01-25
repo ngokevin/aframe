@@ -256,7 +256,7 @@ module.exports.Component = registerComponent('text', {
     textRenderWidth = data.wrapPixels || ((0.5 + data.wrapCount) * font.widthFactor);
     textScale = width / textRenderWidth;
     // Determine height to use.
-    height = textScale * geometry.layout.height;
+    height = textScale * (geometry.layout.height + geometry.layout.descender);
 
     // update geometry dimensions to match layout, if not specified
     if (elGeo) {
