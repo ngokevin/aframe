@@ -25,6 +25,7 @@ module.exports.Shader = registerShader('modifiedsdf', {
     '#endif',
     // FIXME: experimentally determined constants
     '#define BIG_ENOUGH 0.001',
+    '#define MODIFIED_ALPHATEST 0.1',
     '#define ALL_SMOOTH 0.4',
     '#define ALL_ROUGH 0.02',
     '#define DISCARD_ALPHA (alphaTest / (2.2 - 1.2 * ratio))',
@@ -73,6 +74,9 @@ module.exports.Shader = registerShader('modifiedsdf', {
     // FIXME: experimentally determined constant
     // looks much better if we DON'T do this, but do we get Z fighting etc.?
     '  if (duv.x <= BIG_ENOUGH && alpha < alphaTest) { discard; return; }',
+    // else do modified alpha test
+    // FIXME: experimentally determined constant
+    '  if (alpha < alphaTest * MODIFIED_ALPHATEST) { discard; return; }',
     '#else',
     '  vec4 texColor = texture2D(map, vUV);',
     '  float value = texColor.a;',
