@@ -433,7 +433,7 @@ function updateGeometry (geometry, data, font) {
   geometry.update(utils.extend({}, data, {
     font: font,
     width: computeWidth(data.wrapPixels, data.wrapCount, font.widthFactor),
-    text: data.value,
+    text: data.value.replace(/\\n/g, '\n'),
     lineHeight: data.lineHeight || font.common.lineHeight
   }));
 }
