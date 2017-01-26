@@ -25,7 +25,7 @@ module.exports.Shader = registerShader('modifiedsdf', {
     '#endif',
     // FIXME: experimentally determined constants
     '#define BIG_ENOUGH 0.001',
-    '#define MODIFIED_ALPHATEST 0.1',
+    '#define MODIFIED_ALPHATEST (0.02 * isBigEnough / BIG_ENOUGH)',
     '#define ALL_SMOOTH 0.4',
     '#define ALL_ROUGH 0.02',
     '#define DISCARD_ALPHA (alphaTest / (2.2 - 1.2 * ratio))',
@@ -53,15 +53,16 @@ module.exports.Shader = registerShader('modifiedsdf', {
     '  float alpha = contour(dist, width);',
     '  float dscale = 0.353505;',
     '  vec2 duv = dscale * (dFdx(uv) + dFdy(uv));',
+    '  float isBigEnough = max(abs(duv.x), abs(duv.y));',
     // when texel is too small, blend raw alpha value rather than supersampling etc.
     // FIXME: experimentally determined constant
-    '  if (duv.x > BIG_ENOUGH) {',
-    '    float ratio = BIG_ENOUGH / duv.x;',
+    '  if (isBigEnough > BIG_ENOUGH) {',
+    '    float ratio = BIG_ENOUGH / isBigEnough;',
     '    alpha = ratio * alpha + (1.0 - ratio) * dist;',
     '  }',
     // otherwise do weighted supersampling
     // FIXME: why this weighting?
-    '  else if (duv.x <= BIG_ENOUGH) {',
+    '  else if (isBigEnough <= BIG_ENOUGH) {',
     '    vec4 box = vec4 (uv - duv, uv + duv);',
     '    alpha = (alpha + 0.5 * (',
     '      contour(texture2D(map, box.xy).a, width)',
@@ -73,7 +74,7 @@ module.exports.Shader = registerShader('modifiedsdf', {
     // when texel is big enough, do standard alpha test
     // FIXME: experimentally determined constant
     // looks much better if we DON'T do this, but do we get Z fighting etc.?
-    '  if (duv.x <= BIG_ENOUGH && alpha < alphaTest) { discard; return; }',
+    '  if (isBigEnough <= BIG_ENOUGH && alpha < alphaTest) { discard; return; }',
     // else do modified alpha test
     // FIXME: experimentally determined constant
     '  if (alpha < alphaTest * MODIFIED_ALPHATEST) { discard; return; }',
