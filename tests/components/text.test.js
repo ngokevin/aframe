@@ -25,10 +25,25 @@ suite.only('text', function () {
   });
 
   suite('update', function () {
-    test('updates geometry with value', function () {
+    test('updates geometry with value', function (done) {
+      var fontPollInterval;
       var updateGeometrySpy = this.sinon.spy(component.geometry, 'update');
       el.setAttribute('text', 'value', 'foo');
-      assert.equal(updateGeometrySpy.getCalls()[0].args[0].value, 'foo');
+      // NOTE: there are two paths by which geometry update can happen;
+      // first, as after-effect of font change;
+      // second, as direct effect when no font change.
+      // To make this test work reliably,
+      // modified text component so order of arguments is same in both cases.
+      // If the first case is happening, the call may not be instantaneous,
+      // and we would need to wait until the font is loaded.
+      this.timeout(3000);
+      fontPollInterval = setInterval(function () {
+        if (component.currentFont) {
+          assert.equal(updateGeometrySpy.getCalls()[0].args[0].value, 'foo');
+          clearInterval(fontPollInterval);
+          done();
+        }
+      }, 1);
     });
 
     test('calls createOrUpdateMaterial if shader changes', function () {

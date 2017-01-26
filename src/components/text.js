@@ -106,10 +106,10 @@ module.exports.Component = registerComponent('text', {
     // Update geometry and layout.
     if (font) {
       this.geometry.update(utils.extend({}, data, {
-        font: font,
-        lineHeight: data.lineHeight || font.common.lineHeight,
         text: data.value,
-        width: data.wrapPixels || ((0.5 + data.wrapCount) * font.widthFactor)
+        font: font,
+        width: data.wrapPixels || ((0.5 + data.wrapCount) * font.widthFactor),
+        lineHeight: data.lineHeight || font.common.lineHeight
       }));
       this.updateLayout(data);
     }
