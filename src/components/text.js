@@ -74,7 +74,9 @@ module.exports.Component = registerComponent('text', {
     // `wrapCount` units are about one default font character. Wrap roughly at this number.
     wrapCount: {type: 'number', default: 40},
     // `wrapPixels` will wrap using bmfont pixel units (e.g., dejavu's is 32 pixels).
-    wrapPixels: {type: 'number'}
+    wrapPixels: {type: 'number'},
+    // `zOffset` will provide a small z offset to avoid z-fighting
+    zOffset: {type: 'number', default: 0.001}
   },
 
   init: function () {
@@ -329,7 +331,7 @@ module.exports.Component = registerComponent('text', {
     // Position and scale mesh.
     this.mesh.position.x = x * textScale;
     this.mesh.position.y = y * textScale;
-    this.mesh.position.z = 0.001; // put text slightly in front in case there is a plane or other geometry
+    this.mesh.position.z = data.zOffset; // put text slightly in front in case there is a plane or other geometry
     this.mesh.scale.set(textScale, -textScale, textScale);
     this.geometry.computeBoundingSphere();
   }

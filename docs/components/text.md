@@ -31,6 +31,7 @@ The text component renders bitmap and signed distance field font text.
 | width         | Width (default = geometry width, DEFAULT_WIDTH if none) |                       |
 | wrapCount     | Wrap after this many font characters (more or less).    | 40                    |
 | wrapPixels    | Wrap after this many pixels.                            | undefined (wrapCount) |
+| zOffset       | Z offset to apply to avoid Z-fighting.                  | 0.001                 |
 
 More details on these properties [here](https://github.com/Jam3/three-bmfont-text#usage).
 
