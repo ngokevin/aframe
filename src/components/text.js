@@ -89,7 +89,7 @@ module.exports.Component = registerComponent('text', {
 
     this.createOrUpdateMaterial();
     this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.el.setObject3D('text', this.mesh);
+    this.el.setObject3D(this.attrName, this.mesh);
   },
 
   update: function (oldData) {
@@ -120,7 +120,7 @@ module.exports.Component = registerComponent('text', {
   remove: function () {
     this.geometry.dispose();
     this.geometry = null;
-    this.el.removeObject3D('text');
+    this.el.removeObject3D(this.attrName);
     this.material.dispose();
     this.material = null;
     this.texture.dispose();
