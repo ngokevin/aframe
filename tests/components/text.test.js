@@ -15,9 +15,13 @@ suite('text', function () {
     });
 
     el = entityFactory();
-    el.addEventListener('componentinitialized', function (evt) {
+
+    this.doneCalled = false;
+    el.addEventListener('componentinitialized', evt => {
+      if (this.doneCalled) { return; }
       if (evt.detail.name !== 'text') { return; }
       component = el.components.text;
+      this.doneCalled = true;
       done();
     });
     el.setAttribute('text', '');
@@ -29,6 +33,18 @@ suite('text', function () {
       assert.ok(el.getObject3D('text') instanceof THREE.Mesh);
       assert.ok(el.getObject3D('text').geometry);
       assert.ok(el.getObject3D('text').material);
+    });
+  });
+
+  suite('multiple', function () {
+    test('can have multiple instances', function () {
+      el.setAttribute('text__foo', {value: 'foo'});
+      el.setAttribute('text__bar', {value: 'bar'});
+      el.setAttribute('text__baz', {value: 'baz'});
+      assert.ok(el.getObject3D('text') instanceof THREE.Mesh);
+      assert.ok(el.getObject3D('text__foo') instanceof THREE.Mesh);
+      assert.ok(el.getObject3D('text__bar') instanceof THREE.Mesh);
+      assert.ok(el.getObject3D('text__baz') instanceof THREE.Mesh);
     });
   });
 
@@ -229,7 +245,7 @@ suite('text', function () {
       assert.notEqual(el.getObject3D('text').scale.z, 1);
     });
 
-    test('autoscales mesh', function () {
+    test('autoscales mesh to text', function () {
       el.setAttribute('geometry', {primitive: 'plane', height: 0, width: 0});
       assert.equal(el.getAttribute('geometry').width, 0);
       assert.equal(el.getAttribute('geometry').height, 0);
@@ -237,6 +253,14 @@ suite('text', function () {
       el.setAttribute('text', {width: 10, value: 'a'});
       assert.equal(el.getAttribute('geometry').width, 10);
       assert.ok(el.getAttribute('geometry').height);
+    });
+
+    test('autoscales text to mesh', function () {
+      el.setAttribute('geometry', {primitive: 'plane', height: 1, width: 50000});
+      el.setAttribute('text', {value: 'a', width: 0});
+      assert.ok(el.getObject3D('text').scale.x > 10);
+      assert.ok(el.getObject3D('text').scale.y < 10);
+      assert.ok(el.getObject3D('text').scale.z > 10);
     });
   });
 

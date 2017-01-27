@@ -266,6 +266,7 @@ module.exports.Component = registerComponent('text', {
     var y;
 
     // Determine width to use (defined width, geometry's width, or default width).
+    geometryComponent = el.getAttribute('geometry');
     width = data.width || (geometryComponent && geometryComponent.width) || DEFAULT_WIDTH;
 
     // Determine wrap pixel count. Either specified or by experimental fudge factor.
@@ -279,7 +280,6 @@ module.exports.Component = registerComponent('text', {
 
     // Update geometry dimensions to match text layout if width and height are set to 0.
     // For example, scales a plane to fit text.
-    geometryComponent = el.getAttribute('geometry');
     if (geometryComponent) {
       if (!geometryComponent.width) { el.setAttribute('geometry', 'width', width); }
       if (!geometryComponent.height) { el.setAttribute('geometry', 'height', height); }
