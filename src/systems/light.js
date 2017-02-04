@@ -1,8 +1,15 @@
 var registerSystem = require('../core/system').registerSystem;
 var bind = require('../utils/bind');
 var constants = require('../constants/');
+var THREE = require('../lib/three');
 
 var DEFAULT_LIGHT_ATTR = 'data-aframe-default-light';
+
+var SHADOW_MAP_TYPE_MAP = {
+  basic: THREE.BasicShadowMap,
+  pcf: THREE.PCFShadowMap,
+  pcfsoft: THREE.PCFSoftShadowMap
+};
 
 /**
  * Light system.
@@ -14,13 +21,27 @@ var DEFAULT_LIGHT_ATTR = 'data-aframe-default-light';
  * @param {bool} userDefinedLights - Whether user lighting is defined.
  */
 module.exports.System = registerSystem('light', {
+  schema: {
+    shadowMapType: {default: 'pcf', oneOf: ['basic', 'pcf', 'pcfsoft']}
+  },
+
   init: function () {
+    var sceneEl = this.sceneEl;
+    var data = this.data;
+
     this.defaultLights = false;
     this.userDefinedLights = false;
+    this.shadowMapEnabled = false;
+
+    sceneEl.addEventListener('render-target-loaded', bind(function () {
+      sceneEl.renderer.shadowMap.type = SHADOW_MAP_TYPE_MAP[data.shadowMapType];
+      this.setShadowMapEnabled(this.shadowMapEnabled);
+    }, this));
+
     // Wait for all entities to fully load before checking for existence of lights.
     // Since entities wait for <a-assets> to load, any lights attaching to the scene
     // will do so asynchronously.
-    this.sceneEl.addEventListener('loaded', bind(this.setupDefaultLights, this));
+    sceneEl.addEventListener('loaded', bind(this.setupDefaultLights, this));
   },
 
   /**
@@ -73,5 +94,17 @@ module.exports.System = registerSystem('light', {
     sceneEl.appendChild(directionalLight);
 
     this.defaultLights = true;
+  },
+
+  /**
+   * Enables/disables the renderer shadow map.
+   * @param {boolean} enabled
+   */
+  setShadowMapEnabled: function (enabled) {
+    var renderer = this.sceneEl.renderer;
+    this.shadowMapEnabled = enabled;
+    if (renderer) {
+      renderer.shadowMap.enabled = enabled;
+    }
   }
 });

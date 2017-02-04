@@ -7,14 +7,19 @@
     <script src="../../../dist/aframe-master.js"></script>
   </head>
   <body>
-    <a-scene>
 
-      <a-sphere position="0 1.25 -1" radius="1.25" color="#EF2D5E"></a-sphere>
-      <a-box position="-1 0.5 1" rotation="0 45 0" width="1" height="1" depth="1"  color="#4CC3D9"></a-box>
-      <a-cylinder position="1 0.75 1" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
-      <a-plane rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+    <!-- TODO(donmccurdy): Example only; do not commit. -->
+
+    <a-scene light="shadowMapType: pcfsoft">
+
+      <a-sphere shadow position="0 1.25 -1" radius="1.25" color="#EF2D5E"></a-sphere>
+      <a-box shadow position="-1 0.5 1" rotation="0 45 0" width="1" height="1" depth="1"  color="#4CC3D9"></a-box>
+      <a-cylinder shadow position="1 0.75 1" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+      <a-plane shadow="cast: false" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
 
       <a-sky color="#ECECEC"></a-sky>
+      <a-entity light="type:ambient; intensity: 0.4;"></a-entity>
+      <a-entity light="type:directional; angle:45; castShadow:true; shadowMapHeight: 1024; shadowMapWidth: 1024; intensity: 0.4;" position="-15 25 0"></a-entity>
       <a-entity position="0 0 3.8">
         <a-camera></a-camera>
       </a-entity>
