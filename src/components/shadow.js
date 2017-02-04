@@ -8,10 +8,6 @@ var registerComponent = component.registerComponent;
  *
  * When applied to an entity, that entity's geometry and any descendants will cast or receive
  * shadows as specified by the `cast` and `receive` properties.
- *
- * @namespace shadow
- * @param {bool} [cast=false] - whether object will cast shadows.
- * @param {bool} [receive=false] - whether object will receive shadows.
  */
 module.exports.Component = registerComponent('shadow', {
   schema: {
