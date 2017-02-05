@@ -36,6 +36,8 @@ module.exports.System = registerSystem('light', {
     this.shadowMapEnabled = false;
 
     sceneEl.addEventListener('render-target-loaded', bind(function () {
+      // Renderer is not initialized in most tests.
+      if (!sceneEl.renderer) { return; }
       sceneEl.renderer.shadowMap.type = SHADOW_MAP_TYPE_MAP[data.shadowMapType];
       sceneEl.renderer.shadowMap.renderReverseSided = data.shadowMapRenderReverseSided;
       sceneEl.renderer.shadowMap.renderSingleSided = data.shadowMapRenderSingleSided;
