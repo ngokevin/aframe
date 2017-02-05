@@ -22,7 +22,9 @@ var SHADOW_MAP_TYPE_MAP = {
  */
 module.exports.System = registerSystem('light', {
   schema: {
-    shadowMapType: {default: 'pcf', oneOf: ['basic', 'pcf', 'pcfsoft']}
+    shadowMapType: {default: 'pcf', oneOf: ['basic', 'pcf', 'pcfsoft']},
+    shadowMapRenderReverseSided: {default: true},
+    shadowMapRenderSingleSided: {default: true}
   },
 
   init: function () {
@@ -35,6 +37,8 @@ module.exports.System = registerSystem('light', {
 
     sceneEl.addEventListener('render-target-loaded', bind(function () {
       sceneEl.renderer.shadowMap.type = SHADOW_MAP_TYPE_MAP[data.shadowMapType];
+      sceneEl.renderer.shadowMap.renderReverseSided = data.shadowMapRenderReverseSided;
+      sceneEl.renderer.shadowMap.renderSingleSided = data.shadowMapRenderSingleSided;
       this.setShadowMapEnabled(this.shadowMapEnabled);
     }, this));
 
