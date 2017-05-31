@@ -1,4 +1,6 @@
+var constants = require('../constants');
 var registerComponent = require('../core/component').registerComponent;
+var THREE = require('../lib/three');
 var utils = require('../utils/');
 var bind = utils.bind;
 
@@ -34,12 +36,16 @@ module.exports.Component = registerComponent('cursor', {
 
   schema: {
     fuse: {default: utils.device.isMobile()},
-    fuseTimeout: {default: 1500, min: 0}
+    fuseTimeout: {default: 1500, min: 0},
+    projectionEnabled: {default: false},
+    projectionMixin: {default: ''}
   },
 
   init: function () {
     var el = this.el;
     var canvas = el.sceneEl.canvas;
+    var raycasterData;
+
     this.fuseTimeout = undefined;
     this.mouseDownEl = null;
     this.intersection = null;
@@ -57,11 +63,24 @@ module.exports.Component = registerComponent('cursor', {
     this.onIntersection = bind(this.onIntersection, this);
     this.onIntersectionCleared = bind(this.onIntersectionCleared, this);
 
+    if (this.data.projectionEnabled) {
+      this.injectProjectionEl();
+      // If projection enabled, speed up interval so mesh position updates are smooth.
+      raycasterData = el.getDOMAttribute('raycaster');
+      if (!raycasterData || !('interval' in raycasterData)) {
+        el.setAttribute('raycaster', 'interval', 15);
+      }
+    }
+
     // Attach event listeners.
     canvas.addEventListener('mousedown', this.onMouseDown);
     canvas.addEventListener('mouseup', this.onMouseUp);
     el.addEventListener('raycaster-intersection', this.onIntersection);
     el.addEventListener('raycaster-intersection-cleared', this.onIntersectionCleared);
+  },
+
+  tick: function (t) {
+    if (this.data.projectionEnabled) { this.drawProjection(); }
   },
 
   remove: function () {
@@ -195,5 +214,71 @@ module.exports.Component = registerComponent('cursor', {
     el.emit(evtName, {intersectedEl: intersectedEl, intersection: intersection});
     if (!intersectedEl) { return; }
     intersectedEl.emit(evtName, {cursorEl: el, intersection: intersection});
-  }
+  },
+
+/**
+   * Create mesh to project on intersection point.
+   */
+  injectProjectionEl: function () {
+    var data = this.data;
+    var projectionEl = this.projectionEl = document.createElement('a-entity');
+    if (data.projectionMixin) {
+      // Create from mixin.
+      projectionEl.setAttribute('mixin', data.projectionMixin);
+    } else {
+      // Create from default.
+      projectionEl.setAttribute('geometry', {
+        primitive: 'ring',
+        radiusInner: 0.06,
+        radiusOuter: 0.2
+      });
+      projectionEl.setAttribute('material', {
+        color: 'lightblue',
+        opacity: 0.75
+      });
+    }
+    projectionEl.setAttribute(constants.AFRAME_INJECTED, 'cursor-projection');
+    this.el.sceneEl.appendChild(projectionEl);
+  },
+
+  /**
+   * Display a mesh on the face of the intersection point.
+   *
+   * Credit: https://github.com/jujunjun110/aframe-crawling-cursor
+   */
+  drawProjection: (function () {
+    // Hover mesh 5cm above intersection point.
+    var hoverHeight = 0.05;
+    var positionVector = new THREE.Vector3();
+    var normalVector = new THREE.Vector3();
+    var lookAtTargetVector = new THREE.Vector3();
+    var zeroVector = new THREE.Vector3(0, 0, 0);
+
+    return function drawProjectionClosure () {
+      var globalNormal;
+      var intersection = this.intersection;
+      var matrix;
+      var projectionEl = this.projectionEl;
+
+      if (!intersection) { return; }
+
+      // Get matrix that represents item's movement, rotation, scale in world space.
+      matrix = intersection.object.matrixWorld;
+
+      // Remove parallel movement from matrix.
+      matrix.setPosition(zeroVector);
+
+      // Change local normal to global normal.
+      globalNormal = normalVector.copy(intersection.face.normal);
+      globalNormal.applyMatrix4(matrix).normalize();
+
+      // lookAtTarget coordinate = intersection coordinate + global normal vector.
+      lookAtTargetVector.addVectors(intersection.point, globalNormal);
+      projectionEl.object3D.lookAt(lookAtTargetVector);
+
+      // cursor coordinate = intersection coordinate + normal vector * hoverHeight.
+      positionVector.addVectors(intersection.point, globalNormal.multiplyScalar(hoverHeight));
+      projectionEl.setAttribute('position', positionVector);
+    };
+  })()
 });

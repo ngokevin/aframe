@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Cursor Projection</title>
+    <meta name="description" content="Cursor Projection - A-Frame">
+    <script src="../../../dist/aframe-master.js"></script>
+  </head>
+  <body>
+    <a-scene>
+        <a-assets>
+          <!-- From https://github.com/jujunjun110/aframe-crawling-cursor -->
+          <a-asset-item id="roomObj" src="https://cdn.aframe.io/test-models/models/office/office.obj"></a-asset-item>
+          <a-asset-item id="roomMtl" src="https://cdn.aframe.io/test-models/models/office/office.mtl"></a-asset-item>
+        </a-assets>
+
+        <a-entity id="room" obj-model="obj: #roomObj; mtl: #roomMtl"
+                  position="0 -1 0"></a-entity>
+
+        <a-camera>
+          <a-entity cursor="projectionEnabled: true"></a-entity>
+        </a-camera>
+    </a-scene>
+  </body>
+</html>
