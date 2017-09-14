@@ -21,16 +21,13 @@ module.exports.Component = registerComponent('gltf-model', {
 
     if (!src) { return; }
 
-    this.remove();
-
     this.loader.load(src, function gltfLoaded (gltfModel) {
       self.model = gltfModel.scene || gltfModel.scenes[0];
       self.model.animations = gltfModel.animations;
       el.setObject3D('mesh', self.model);
       el.emit('model-loaded', {format: 'gltf', model: self.model});
     }, undefined /* onProgress */, function gltfFailed (error) {
-      var message = (error && error.message) ? error.message : 'Failed to load glTF model';
-      warn(message);
+      warn((error && error.message) ? error.message : 'Failed to load glTF model');
       el.emit('model-error', {format: 'gltf', src: src});
     });
   },

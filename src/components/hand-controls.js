@@ -184,6 +184,7 @@ module.exports.Component = registerComponent('hand-controls', {
   },
 
   remove: function () {
+    this.removeEventListeners();
     this.el.removeObject3D('mesh');
   },
 
