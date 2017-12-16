@@ -75216,12 +75216,14 @@ Component.prototype = {
     // Cache previously passed attribute to decide if we skip type checking.
     this.previousAttrValue = attrValue;
 
+    // Cache current attrValue for future updates. Updates `this.attrValue`.
     attrValue = this.parseAttrValueForCache(attrValue);
-    if (this.updateSchema) { this.updateSchema(this.buildData(attrValue, false, true)); }
-    this.data = this.buildData(attrValue, clobber, false, skipTypeChecking);
-
-    // Cache current attrValue for future updates.
     this.updateCachedAttrValue(attrValue, clobber);
+
+    if (this.updateSchema) {
+      this.updateSchema(this.buildData(this.attrValue, false, true));
+    }
+    this.data = this.buildData(this.attrValue, clobber, false, skipTypeChecking);
 
     if (!this.initialized) {
       // Component is being already initialized.
@@ -78266,7 +78268,7 @@ _dereq_('./core/a-mixin');
 _dereq_('./extras/components/');
 _dereq_('./extras/primitives/');
 
-console.log('A-Frame Version: 0.7.0 (Date 2017-12-13, Commit #bce7663b)');
+console.log('A-Frame Version: 0.7.0 (Date 2017-12-16, Commit #c5af94aa)');
 console.log('three Version:', pkg.dependencies['three']);
 console.log('WebVR Polyfill Version:', pkg.dependencies['webvr-polyfill']);
 
@@ -80062,12 +80064,22 @@ module.exports.isNodeEnvironment = !module.exports.isBrowserEnvironment;
  * Split a delimited component property string (e.g., `material.color`) to an object
  * containing `component` name and `property` name. If there is no delimiter, just return the
  * string back.
+ *
+ * Cache arrays from splitting strings via delimiter to save on memory.
+ *
+ * @param {string} str - e.g., `material.opacity`.
+ * @param {string} delimiter - e.g., `.`.
+ * @returns {array} e.g., `['material', 'opacity']`.
  */
-module.exports.getComponentPropertyPath = function (str, delimiter) {
+var propertyPathCache = {};
+function getComponentPropertyPath (str, delimiter) {
   delimiter = delimiter || '.';
-  if (str.indexOf(delimiter) === -1) { return str; }
-  return str.split(delimiter);
-};
+  if (!propertyPathCache[delimiter]) { propertyPathCache[delimiter] = {}; }
+  propertyPathCache[delimiter][str] = str.split(delimiter);
+  return propertyPathCache[delimiter][str];
+}
+module.exports.getComponentPropertyPath = getComponentPropertyPath;
+module.exports.propertyPathCache = propertyPathCache;
 
 /**
  * Get component property using encoded component name + component property name with a
@@ -80077,7 +80089,7 @@ module.exports.getComponentProperty = function (el, name, delimiter) {
   var splitName;
   delimiter = delimiter || '.';
   if (name.indexOf(delimiter) !== -1) {
-    splitName = name.split(delimiter);
+    splitName = getComponentPropertyPath(name, delimiter);
     return el.getAttribute(splitName[0])[splitName[1]];
   }
   return el.getAttribute(name);
@@ -80088,13 +80100,11 @@ module.exports.getComponentProperty = function (el, name, delimiter) {
  * delimiter.
  */
 module.exports.setComponentProperty = function (el, name, value, delimiter) {
-  var data = {};
   var splitName;
   delimiter = delimiter || '.';
   if (name.indexOf(delimiter) !== -1) {
-    splitName = name.split(delimiter);
-    data[splitName[1]] = value;
-    el.setAttribute(splitName[0], data);
+    splitName = getComponentPropertyPath(name, delimiter);
+    el.setAttribute(splitName[0], splitName[1], value);
     return;
   }
   el.setAttribute(name, value);
