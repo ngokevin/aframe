@@ -602,8 +602,9 @@ var proto = Object.create(ANode.prototype, {
         return;
       }
       if (attr === 'mixin') {
+        // Ignore if `<a-node>` code is just updating computed mixin in the DOM.
+        if (newVal === this.computedMixinStr) { return; }
         this.mixinUpdate(newVal, oldVal);
-        return;
       }
     }
   },
@@ -643,8 +644,8 @@ var proto = Object.create(ANode.prototype, {
 
       // Not a component. Normal set attribute.
       if (!COMPONENTS[componentName]) {
-        ANode.prototype.setAttribute.call(this, attrName, arg1);
         if (attrName === 'mixin') { this.mixinUpdate(arg1); }
+        ANode.prototype.setAttribute.call(this, attrName, arg1);
         return;
       }
 
