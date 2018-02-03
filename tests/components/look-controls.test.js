@@ -61,10 +61,12 @@ suite('look-controls', function () {
       window.dispatchEvent(new Event('mouseup'));
     });
 
-    test('requests pointer lock on mousedown', function (done) {
+    test('requests pointer lock on mousedown if pointer lock enabled', function (done) {
       var canvasEl = this.sceneEl.canvas;
-
       var requestPointerLock = this.sinon.spy(canvasEl, 'requestPointerLock');
+      var cameraEl = this.sceneEl.camera.el;
+
+      cameraEl.setAttribute('look-controls', {pointerLockEnabled: true});
 
       process.nextTick(function () {
         assert.ok(requestPointerLock.called);
