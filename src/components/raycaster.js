@@ -413,7 +413,7 @@ module.exports.Component = registerComponent('raycaster', {
     }
     copyArray(this.clearedIntersectedEls, this.intersectedEls);
     this.intersectedEls.length = 0;
-    this.el.emit(EVENTS.intersectionCleared, this.intersectedClearedDetail);
+    this.el.emit(EVENTS.intersectionClear, this.intersectionClearedDetail);
   }
 });
 

@@ -297,6 +297,16 @@ suite('raycaster', function () {
       });
       component.tick();
     });
+
+    test('emits intersectioncleared when disabled', function (done) {
+      targetEl.addEventListener('raycaster-intersected', function () {
+        el.addEventListener('raycaster-intersection-cleared', function () {
+          done();
+        });
+        el.setAttribute('raycaster', 'enabled', false);
+      });
+      component.tick();
+    });
   });
 
   suite('non-recursive raycaster', function () {
