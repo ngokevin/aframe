@@ -283,6 +283,20 @@ suite('raycaster', function () {
       });
       component.tick();
     });
+
+    test('clears intersections when disabled', function (done) {
+      targetEl.addEventListener('raycaster-intersected', function () {
+        targetEl.addEventListener('raycaster-intersected-cleared', function () {
+          done();
+        });
+        assert.equal(component.intersectedEls.length, 2);
+        assert.equal(component.clearedIntersectedEls.length, 0);
+        el.setAttribute('raycaster', 'enabled', false);
+        assert.equal(component.intersectedEls.length, 0);
+        assert.equal(component.clearedIntersectedEls.length, 2);
+      });
+      component.tick();
+    });
   });
 
   suite('non-recursive raycaster', function () {

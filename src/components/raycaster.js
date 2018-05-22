@@ -20,6 +20,13 @@ var OBSERVER_CONFIG = {
   subtree: true
 };
 
+var EVENTS = {
+  intersect: 'raycaster-intersected',
+  intersection: 'raycaster-intersection',
+  intersectClear: 'raycaster-intersected-cleared',
+  intersectionClear: 'raycaster-intersection-cleared'
+};
+
 /**
  * Raycaster component.
  *
@@ -107,6 +114,8 @@ module.exports.Component = registerComponent('raycaster', {
         ? this.addEventListeners()
         : this.removeEventListeners();
     }
+
+    if (oldData.enabled && !data.enabled) { this.clearAllIntersections(); }
 
     this.setDirty();
   },
@@ -235,17 +244,17 @@ module.exports.Component = registerComponent('raycaster', {
     clearedIntersectedEls.length = 0;
     for (i = 0; i < prevIntersectedEls.length; i++) {
       if (intersectedEls.indexOf(prevIntersectedEls[i]) !== -1) { continue; }
-      prevIntersectedEls[i].emit('raycaster-intersected-cleared',
+      prevIntersectedEls[i].emit(EVENTS.intersectClear,
                                  this.intersectedClearedDetail);
       clearedIntersectedEls.push(prevIntersectedEls[i]);
     }
     if (clearedIntersectedEls.length) {
-      el.emit('raycaster-intersection-cleared', this.intersectionClearedDetail);
+      el.emit(EVENTS.intersectionClear, this.intersectionClearedDetail);
     }
 
     // Emit intersected on intersected entity per intersected entity.
     for (i = 0; i < newIntersectedEls.length; i++) {
-      newIntersectedEls[i].emit('raycaster-intersected', {
+      newIntersectedEls[i].emit(EVENTS.intersect, {
         el: el,
         intersection: newIntersections[i]
       });
@@ -255,7 +264,7 @@ module.exports.Component = registerComponent('raycaster', {
     if (newIntersections.length) {
       this.intersectionDetail.els = newIntersectedEls;
       this.intersectionDetail.intersections = newIntersections;
-      el.emit('raycaster-intersection', this.intersectionDetail);
+      el.emit(EVENTS.intersection, this.intersectionDetail);
     }
 
     // Update line length.
@@ -394,7 +403,18 @@ module.exports.Component = registerComponent('raycaster', {
       }
       return objects;
     };
-  })()
+  })(),
+
+  clearAllIntersections: function () {
+    var i;
+    for (i = 0; i < this.intersectedEls.length; i++) {
+      this.intersectedEls[i].emit(EVENTS.intersectClear,
+                                  this.intersectedClearedDetail);
+    }
+    copyArray(this.clearedIntersectedEls, this.intersectedEls);
+    this.intersectedEls.length = 0;
+    this.el.emit(EVENTS.intersectionCleared, this.intersectedClearedDetail);
+  }
 });
 
 /**
