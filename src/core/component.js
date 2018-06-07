@@ -466,9 +466,9 @@ module.exports.registerComponent = function (name, definition) {
   });
 
   if (components[name]) {
-    throw new Error('The component `' + name + '` has been already registered. ' +
-                    'Check that you are not loading two versions of the same component ' +
-                    'or two different components of the same name.');
+    warn('The component `' + name + '` has been already registered. ' +
+         'Make sure you are not loading two different versions of the same component ' +
+         'or two different components of the same name.');
   }
   NewComponent = function (el, attr, id) {
     Component.call(this, el, attr, id);
