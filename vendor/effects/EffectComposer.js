@@ -165,7 +165,7 @@ Object.assign( THREE.EffectComposer.prototype, {
 
         return;
       }
-
+        
       pass.render( this.renderer, this.writeBuffer, this.readBuffer, delta, maskActive );
 
       this.swapBuffers(pass);
