@@ -40,6 +40,7 @@ module.exports.Component = registerComponent('look-controls', {
     this.savedPose = null;
     this.pointerLocked = false;
     this.setupMouseControls();
+    this.setupHMDControls();
     this.bindMethods();
 
     this.savedPose = {
@@ -75,7 +76,9 @@ module.exports.Component = registerComponent('look-controls', {
   tick: function (t) {
     var data = this.data;
     if (!data.enabled) { return; }
+    this.controls.update();
     this.updateOrientation();
+    this.updatePosition();
   },
 
   play: function () {
@@ -112,6 +115,17 @@ module.exports.Component = registerComponent('look-controls', {
     this.yawObject = new THREE.Object3D();
     this.yawObject.position.y = 10;
     this.yawObject.add(this.pitchObject);
+  },
+
+  /**
+    * Set up VR controls that will copy data to the dolly.
+  */
+  setupHMDControls: function () {
+    this.dolly = new THREE.Object3D();
+    this.euler = new THREE.Euler();
+    this.hmdQuaternion = new THREE.Quaternion();
+    this.controls = new THREE.VRControls(this.dolly);
+    this.controls.userHeight = 0.0;
   },
 
   /**
@@ -185,21 +199,37 @@ module.exports.Component = registerComponent('look-controls', {
   updateOrientation: function () {
     var el = this.el;
     var hmdEuler = this.hmdEuler;
+    var hmdQuaternion = this.hmdQuaternion;
     var pitchObject = this.pitchObject;
     var yawObject = this.yawObject;
     var sceneEl = this.el.sceneEl;
 
     // In VR mode, THREE is in charge of updating the camera rotation.
-    if (sceneEl.is('vr-mode') && sceneEl.checkHeadsetConnected()) { return; }
+    if (sceneEl.is('vr-mode') && sceneEl.checkHeadsetConnected()) {
+      hmdQuaternion = hmdQuaternion.copy(this.dolly.quaternion);
+      hmdEuler.setFromQuaternion(hmdQuaternion, 'YXZ');
+      el.object3D.rotation.copy(hmdEuler);
+      return;
+    }
 
     // Calculate polyfilled HMD quaternion.
     this.polyfillControls.update();
     hmdEuler.setFromQuaternion(this.polyfillObject.quaternion, 'YXZ');
-
     // On mobile, do camera rotation with touch events and sensors.
     el.object3D.rotation.x = hmdEuler.x + pitchObject.rotation.x;
     el.object3D.rotation.y = hmdEuler.y + yawObject.rotation.y;
   },
+
+  updatePosition: (function () {
+    var position = new THREE.Vector3();
+    return function () {
+      var el = this.el;
+      if (!el.sceneEl.is('vr-mode')) { return; }
+      this.dolly.updateMatrix();
+      position.setFromMatrixPosition(this.dolly.matrix);
+      el.object3D.position.copy(position);
+    };
+  })(),
 
   /**
    * Translate mouse drag into rotation.

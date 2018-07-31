@@ -14,7 +14,6 @@ var proto = {
   schema: {},
   init: function () {
     var sceneEl = this.el;
-
     if (!this.el.isScene) {
       warn('Effect components can only be applied to <a-scene>');
       return;
@@ -24,6 +23,7 @@ var proto = {
       sceneEl.addEventListener('camera-set-active', this.init.bind(this));
       return;
     }
+    sceneEl.resize();
     sceneEl.effectComposer || this.initEffectComposer();
     this.initPass();
     this.update();
@@ -50,13 +50,11 @@ var proto = {
 
   initEffectComposer: function () {
     var sceneEl = this.el;
-    var effectComposer = sceneEl.effectComposer = new THREE.EffectComposer(sceneEl.renderer);
+    var effectComposer = sceneEl.effectComposer = new THREE.EffectComposer(sceneEl.renderer, undefined, sceneEl.effect);
     var renderPass = new THREE.RenderPass(sceneEl.object3D, sceneEl.camera);
     effectComposer.addPass(renderPass);
     lastEffectInitialized = renderPass;
-    renderPass.renderToScreen = true;
     passes.render = renderPass;
-    setTimeout(function () { effectComposer.resize(); }, 0);
     return effectComposer;
   }
 };
