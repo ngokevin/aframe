@@ -41,11 +41,6 @@ module.exports.AScene = registerElement('a-scene', {
         this.isMobile = isMobile;
         this.isScene = true;
         this.object3D = new THREE.Scene();
-        var self = this;
-        this.object3D.onAfterRender = function (renderer, scene, camera) {
-          // THREE may swap the camera used for the rendering if in VR, so we pass it to tock
-          if (self.isPlaying) { self.tock(self.time, self.delta, camera); }
-        };
         this.render = bind(this.render, this);
         this.systems = {};
         this.systemNames = [];
@@ -252,19 +247,12 @@ module.exports.AScene = registerElement('a-scene', {
     enterVR: {
       value: function () {
         var self = this;
-        var vrDisplay;
-        var vrManager = self.renderer.vr;
+        var effect = this.effect;
         // Don't enter VR if already in VR.
         if (this.is('vr-mode')) { return Promise.resolve('Already in VR.'); }
         // Enter VR via WebVR API.
         if (this.checkHeadsetConnected() || this.isMobile) {
-          vrDisplay = utils.device.getVRDisplay();
-          vrManager.setDevice(vrDisplay);
-          vrManager.enabled = true;
-          if (!vrDisplay.isPresenting) {
-            return vrDisplay.requestPresent([{source: this.canvas}])
-                            .then(enterVRSuccess, enterVRFailure);
-          }
+          return effect && effect.requestPresent().then(enterVRSuccess, enterVRFailure) || Promise.reject(new Error('VREffect not initialized'));
         }
         enterVRSuccess();
         return Promise.resolve();
@@ -307,19 +295,23 @@ module.exports.AScene = registerElement('a-scene', {
     exitVR: {
       value: function () {
         var self = this;
-        var vrDisplay;
 
         // Don't exit VR if not in VR.
         if (!this.is('vr-mode')) { return Promise.resolve('Not in VR.'); }
 
         exitFullscreen();
         // Handle exiting VR if not yet already and in a headset or polyfill.
+<<<<<<< HEAD
         if (this.checkHeadsetConnected() || this.isMobile) {
           this.renderer.vr.enabled = false;
           vrDisplay = utils.device.getVRDisplay();
           if (vrDisplay.isPresenting) {
             return vrDisplay.exitPresent().then(exitVRSuccess, exitVRFailure);
           }
+=======
+        if (!fromExternal && (this.checkHeadsetConnected() || this.isMobile)) {
+          return this.effect.exitPresent().then(exitVRSuccess, exitVRFailure);
+>>>>>>> e2b1c2583... Go back to VREffects / VRControls
         }
 
         // Handle exiting VR in all other cases (2D fullscreen, external exit VR event).
@@ -386,7 +378,12 @@ module.exports.AScene = registerElement('a-scene', {
         var display = evt.display || evt.detail.display;
         // Entering VR.
         if (display.isPresenting) {
+<<<<<<< HEAD
           this.enterVR();
+=======
+          this.enterVR(true);
+          this.effectComposer.reset();
+>>>>>>> e2b1c2583... Go back to VREffects / VRControls
           return;
         }
         // Exiting VR.
@@ -474,11 +471,16 @@ module.exports.AScene = registerElement('a-scene', {
         var embedded;
         var isVRPresenting;
         var size;
+<<<<<<< HEAD
         var vrDevice;
 
         vrDevice = this.renderer.vr.getDevice();
         isVRPresenting = this.renderer.vr.enabled && vrDevice && vrDevice.isPresenting;
 
+=======
+        var isVRPresenting;
+        isVRPresenting = this.effect.isPresenting;
+>>>>>>> e2b1c2583... Go back to VREffects / VRControls
         // Do not update renderer, if a camera or a canvas have not been injected.
         // In VR mode, three handles canvas resize based on the dimensions returned by
         // the getEyeParameters function of the WebVR API. These dimensions are independent of
@@ -539,6 +541,8 @@ module.exports.AScene = registerElement('a-scene', {
         }
 
         renderer = this.renderer = new THREE.WebGLRenderer(rendererConfig);
+        this.effect = new THREE.VREffect(renderer);
+        this.effect.autoSubmitFrame = false;
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.sortObjects = false;
         if (this.camera) { renderer.vr.setPoseTarget(this.camera.el.object3D); }
@@ -658,19 +662,23 @@ module.exports.AScene = registerElement('a-scene', {
     render: {
       value: function () {
         var effectComposer = this.effectComposer;
-        var renderer = this.renderer;
+        var effect = this.effect;
 
         this.delta = this.clock.getDelta() * 1000;
         this.time = this.clock.elapsedTime * 1000;
 
         if (this.isPlaying) { this.tick(this.time, this.delta); }
 
-        renderer.setAnimationLoop(this.render);
+        effect.requestAnimationFrame(this.render);
         if (effectComposer) {
           effectComposer.render();
         } else {
-          renderer.render(this.object3D, this.camera, this.renderTarget);
+          effect.render(this.object3D, this.camera, this.renderTarget);
         }
+
+        if (this.isPlaying) { this.tock(this.time, this.delta, this.camera); }
+
+        effect.submitFrame();
       },
       writable: true
     }
