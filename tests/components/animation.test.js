@@ -1,5 +1,5 @@
 /* global assert, setup, suite, test */
-var entityFactory = require('./helpers').entityFactory;
+var entityFactory = require('../helpers').entityFactory;
 
 suite('animation', function () {
   var component;

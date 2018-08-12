@@ -1,12 +1,12 @@
-/* global AFRAME */
 var anime = require('animejs');
+var components = require('../core/component').components;
 var registerComponent = require('../core/component').registerComponent;
 var THREE = require('../lib/three');
+var utils = require('../utils');
 
 var colorHelperFrom = new THREE.Color();
 var colorHelperTo = new THREE.Color();
 
-var utils = AFRAME.utils;
 var getComponentProperty = utils.entity.getComponentProperty;
 var setComponentProperty = utils.entity.setComponentProperty;
 var splitCache = {};
@@ -338,9 +338,9 @@ module.exports.Component = registerComponent('animation', {
 
     // Parse coordinates.
     from = data.from
-      ? AFRAME.utils.coordinates.parse(data.from)  // If data.from defined, use that.
+      ? utils.coordinates.parse(data.from)  // If data.from defined, use that.
       : getComponentProperty(el, data.property);  // If data.from not defined, get on the fly.
-    to = AFRAME.utils.coordinates.parse(data.to);
+    to = utils.coordinates.parse(data.to);
 
     // Animate rotation through radians.
     if (data.property === PROP_ROTATION) {
@@ -504,7 +504,7 @@ function getPropertyType (el, property) {
   split = property.split('.');
   componentName = split[0];
   propertyName = split[1];
-  component = el.components[componentName] || AFRAME.components[componentName];
+  component = el.components[componentName] || components[componentName];
 
   // Primitives.
   if (!component) { return null; }
