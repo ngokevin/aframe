@@ -39,6 +39,12 @@ suite('animation', function () {
       assert.equal(el.getAttribute('light').intensity, 1.0);
     });
 
+    test('can infer from value', function () {
+      el.setAttribute('light', 'intensity', 0.75);
+      el.setAttribute('animation', {property: 'light.intensity', to: 1});
+      assert.equal(component.config.targets.aframeProperty, 0.75);
+    });
+
     test('handles non-truthy from value (i.e., 0)', function () {
       el.setAttribute('text', {value: 'supermedium'});
       el.setAttribute('animation', {
@@ -82,6 +88,16 @@ suite('animation', function () {
       component.tick(0, 500);
       assert.equal(el.components.material.material.opacity, 1.0);
     });
+
+    test('can infer from value', function () {
+      el.setAttribute('material', 'opacity', 0.75);
+      el.setAttribute('animation', {
+        property: 'components.material.material.opacity',
+        dur: 1000,
+        to: 1
+      });
+      assert.equal(component.config.targets.aframeProperty, 0.75);
+    });
   });
 
   suite('direct object3D value animation', () => {
@@ -99,6 +115,16 @@ suite('animation', function () {
       assert.ok(el.object3D.position.x < 10);
       component.tick(0, 500);
       assert.equal(el.object3D.position.x, 10);
+    });
+
+    test('can infer from value', function () {
+      el.object3D.position.z = 0.75;
+      el.setAttribute('animation', {
+        property: 'object3D.position.z',
+        dur: 1000,
+        to: 1
+      });
+      assert.equal(component.config.targets.aframeProperty, 0.75);
     });
   });
 
@@ -124,6 +150,22 @@ suite('animation', function () {
       assert.equal(el.components.material.material.color.b, 0);
       assert.equal(el.components.material.material.color.r, 1);
     });
+
+    test('can infer from value', function () {
+      el.setAttribute('material', '');
+      el.components.material.material.color.r = 0.1;
+      el.components.material.material.color.g = 0.2;
+      el.components.material.material.color.b = 0.3;
+      el.setAttribute('animation', {
+        property: 'components.material.material.color',
+        dur: 1000,
+        to: '#FFF',
+        type: 'color'
+      });
+      assert.equal(component.config.targets[0].r, 0.1);
+      assert.equal(component.config.targets[0].g, 0.2);
+      assert.equal(component.config.targets[0].b, 0.3);
+    });
   });
 
   suite('dir (direction)', () => {
@@ -142,6 +184,49 @@ suite('animation', function () {
       assert.ok(el.getAttribute('light').intensity > 0.5);
       component.tick(0, 500);
       assert.equal(el.getAttribute('light').intensity, 0.5);
+    });
+
+    test('can alternate', function () {
+      el.setAttribute('animation', {
+        property: 'object3D.rotation.x',
+        from: 0,
+        to: Math.PI * 2,
+        dir: 'alternate',
+        dur: 1000,
+        loop: true
+      });
+
+      component.tick(0, 1);
+      assert.equal(el.object3D.rotation.x, 0);
+
+      // Now going up.
+      component.tick(0, 1000);
+      assert.equal(el.object3D.rotation.x, Math.PI * 2);
+
+      // Now going down.
+      component.tick(0, 500);
+      assert.ok(el.object3D.rotation.x > 0);
+      assert.ok(el.object3D.rotation.x < Math.PI * 2);
+    });
+  });
+
+  suite('loop', () => {
+    test('can loop', function () {
+      el.setAttribute('animation', {
+        property: 'light.intensity',
+        from: 0,
+        to: 1,
+        loop: true,
+        dur: 1000
+      });
+      component.tick(0, 1);
+      assert.equal(el.getAttribute('light').intensity, 0);
+      component.tick(0, 1000);
+      assert.equal(el.getAttribute('light').intensity, 1.0);
+      component.tick(0, 1);
+      assert.equal(Math.round(el.getAttribute('light').intensity), 0);
+      component.tick(0, 1000);
+      assert.equal(el.getAttribute('light').intensity, 1.0);
     });
   });
 
@@ -217,8 +302,10 @@ suite('animation', function () {
       el.setAttribute('animation', {property: 'position', pauseEvents: 'bar boo'});
       assert.ok(component.animationIsPlaying);
       el.addEventListener('bar', function () {
-        assert.notOk(component.animationIsPlaying);
-        done();
+        setTimeout(() => {
+          assert.notOk(component.animationIsPlaying);
+          done();
+        });
       });
       el.emit('bar');
     });
@@ -316,5 +403,9 @@ suite('animation', function () {
       el.removeAttribute('animation');
       assert.notOk(component.animationIsPlaying);
     });
+  });
+
+  test('exposes anime.js', () => {
+    assert.ok(window.AFRAME.ANIME);
   });
 });
