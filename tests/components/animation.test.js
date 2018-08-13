@@ -38,6 +38,31 @@ suite('animation', function () {
       component.tick(0, 500);
       assert.equal(el.getAttribute('light').intensity, 1.0);
     });
+
+    test('handles non-truthy from value (i.e., 0)', function () {
+      el.setAttribute('text', {value: 'supermedium'});
+      el.setAttribute('animation', {
+        property: 'components.text.material.uniforms.opacity.value',
+        from: 0,
+        to: 1,
+        dur: 1000
+      });
+      component.tick(0, 1);
+      assert.equal(el.components.text.material.uniforms.opacity.value, 0);
+    });
+
+    test('handles non-truthy to value (i.e., 0)', function () {
+      el.setAttribute('animation', {
+        property: 'object3D.scale.y',
+        from: 1,
+        to: 0,
+        dur: 1000
+      });
+      component.tick(0, 1);
+      assert.equal(el.object3D.scale.y, 1);
+      component.tick(0, 1000);
+      assert.equal(el.object3D.scale.y, 0);
+    });
   });
 
   suite('direct component value animation', () => {
@@ -134,11 +159,21 @@ suite('animation', function () {
         done();
       }, 100);
     });
+
+    test('does not play if startEvents', function () {
+      el.setAttribute('animation', {property: 'position', startEvents: 'foo'});
+      assert.notOk(component.animationIsPlaying);
+    });
+
+    test('does not play if not autoplay', function () {
+      el.setAttribute('animation', {property: 'position', autoplay: false});
+      assert.notOk(component.animationIsPlaying);
+    });
   });
 
   suite('event listeners', () => {
     test('plays on startEvents', function (done) {
-      el.setAttribute('animation', {property: 'position', startEvents: ['foo']});
+      el.setAttribute('animation', {property: 'position', startEvents: ['foo', 'far']});
       assert.notOk(component.animationIsPlaying);
       el.addEventListener('foo', function () {
         assert.ok(component.animationIsPlaying);
@@ -147,13 +182,75 @@ suite('animation', function () {
       el.emit('foo');
     });
 
+    test('restarts animation on startEvents', function (done) {
+      el.setAttribute('animation', {
+        property: 'object3D.scale.z',
+        from: 1,
+        to: 2,
+        startEvents: ['foo', 'foo2']
+      });
+
+      el.addEventListener('foo', function () {
+        assert.ok(component.animationIsPlaying);
+        assert.equal(el.object3D.scale.z, 1);
+        component.tick(0, 1);
+        component.tick(0, 550);
+        assert.ok(el.object3D.scale.z > 1);
+        el.emit('foo2');
+      });
+
+      el.addEventListener('foo2', function () {
+        component.tick(0, 1);
+        assert.ok(component.animationIsPlaying);
+        assert.equal(el.object3D.scale.z, 1);
+        component.tick(0, 550);
+        assert.ok(el.object3D.scale.z > 1);
+        done();
+      });
+
+      component.tick(0, 1);
+      component.tick(0, 500);
+      el.emit('foo');
+    });
+
     test('pauses on pauseEvents', function (done) {
-      el.setAttribute('animation', {property: 'position', pauseEvents: ['bar']});
+      el.setAttribute('animation', {property: 'position', pauseEvents: 'bar boo'});
       assert.ok(component.animationIsPlaying);
       el.addEventListener('bar', function () {
         assert.notOk(component.animationIsPlaying);
         done();
       });
+      el.emit('bar');
+    });
+
+    test('resumes on resumeEvents', function (done) {
+      el.setAttribute('text', {opacity: 0, value: 'supermedium'});
+      el.setAttribute('animation', {
+        property: 'components.text.material.uniforms.opacity.value',
+        from: 0,
+        to: 1,
+        dur: 1000,
+        pauseEvents: 'bar',
+        resumeEvents: 'qux'
+      });
+      el.addEventListener('bar', function () {
+        assert.notOk(component.animationIsPlaying);
+        el.emit('qux');
+      });
+      el.addEventListener('qux', function () {
+        assert.ok(component.animationIsPlaying);
+        assert.ok(el.components.text.material.uniforms.opacity.value > 0, 'More than 0');
+        assert.ok(el.components.text.material.uniforms.opacity.value < 1, 'Less than 1');
+        component.tick(0, 500);
+        assert.equal(el.components.text.material.uniforms.opacity.value, 1);
+        done();
+      });
+
+      assert.ok(component.animationIsPlaying, 'Should be playing');
+      component.tick(0, 1);
+      component.tick(0, 500);
+      assert.ok(el.components.text.material.uniforms.opacity.value > 0, 'More than 0');
+      assert.ok(el.components.text.material.uniforms.opacity.value < 1, 'Less than 1');
       el.emit('bar');
     });
   });
@@ -195,6 +292,20 @@ suite('animation', function () {
         startEvents: 'startAnimation'
       });
       component.el.emit('startAnimation');
+    });
+  });
+
+  suite('tick', function () {
+    test('only calls animejs animation.tick if playing', function () {
+      el.setAttribute('animation', 'property', 'position');
+      let animationTickSpy = this.sinon.spy(component.animation, 'tick');
+      component.animationIsPlaying = false;
+      component.tick(0, 10);
+      assert.notOk(animationTickSpy.called);
+      component.animationIsPlaying = true;
+      component.tick(0, 10);
+      assert.ok(animationTickSpy.called);
+      assert.equal(animationTickSpy.getCalls()[0].args[0], 10);
     });
   });
 

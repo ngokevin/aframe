@@ -227,7 +227,7 @@ module.exports.Component = registerComponent('animation', {
       return;
     }
 
-    from = data.from || getRawProperty(el, data.property);
+    from = data.from === '' ? getRawProperty(el, data.property) : data.from;
     to = data.to;
 
     // Use r/g/b vector for color type.
@@ -271,11 +271,16 @@ module.exports.Component = registerComponent('animation', {
       return;
     }
 
-    from = data.from || (
-      isRawProperty(data)
+    if (data.from === '') {
+      // Infer from.
+      from = isRawProperty(data)
         ? getRawProperty(el, data.property)
-        : getComponentProperty(el, data.property)
-    );
+        : getComponentProperty(el, data.property);
+    } else {
+      // Explicit from.
+      from = data.from;
+    }
+
     to = data.to;
 
     isNumber = !isNaN(from || to);
@@ -334,7 +339,7 @@ module.exports.Component = registerComponent('animation', {
     var to;
 
     // Parse coordinates.
-    from = data.from
+    from = data.from !== ''
       ? utils.coordinates.parse(data.from)  // If data.from defined, use that.
       : getComponentProperty(el, data.property);  // If data.from not defined, get on the fly.
     to = utils.coordinates.parse(data.to);
@@ -414,7 +419,7 @@ module.exports.Component = registerComponent('animation', {
     var el = this.el;
     var self = this;
 
-    if (data.from) { return false; }
+    if (data.from !== '') { return false; }
 
     if (!data.property.startsWith(STRING_COMPONENTS)) { return false; }
 
