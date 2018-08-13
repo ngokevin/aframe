@@ -242,10 +242,6 @@ module.exports.Component = registerComponent('animation', {
 
     config.update = (function () {
       var lastValue = {};
-      lastValue.r = from.r;
-      lastValue.g = from.g;
-      lastValue.b = from.b;
-
       return function (anim) {
         var value;
         value = anim.animatables[0].target;
@@ -302,7 +298,8 @@ module.exports.Component = registerComponent('animation', {
     config.targets = this.targets;
     config.aframeProperty = to;
     config.update = (function () {
-      var lastValue = from;
+      var lastValue;
+
       return function (anim) {
         var value;
         value = anim.animatables[0].target.aframeProperty;
@@ -359,10 +356,6 @@ module.exports.Component = registerComponent('animation', {
         data.property === PROP_SCALE) {
       config.update = (function () {
         var lastValue = {};
-        lastValue.x = from.x;
-        lastValue.y = from.y;
-        lastValue.z = from.z;
-
         return function (anim) {
           var value = anim.animatables[0].target;
           // For animation timeline.
@@ -381,10 +374,6 @@ module.exports.Component = registerComponent('animation', {
     // Animating some vector.
     config.update = (function () {
       var lastValue = {};
-      lastValue.x = from.x;
-      lastValue.y = from.y;
-      lastValue.z = from.z;
-
       return function (anim) {
         var value = anim.animations[0].target;
         // For animation timeline.
