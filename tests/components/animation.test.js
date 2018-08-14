@@ -203,6 +203,28 @@ suite('animation', function () {
     });
   });
 
+  suite('boolean animation', () => {
+    test('can toggle from false to true via strings', function () {
+      el.setAttribute('animation', {property: 'visible', from: 'false', to: 'true', dur: 1000});
+      component.tick(0, 1);
+      assert.equal(el.object3D.visible, false);
+      component.tick(0, 500);
+      assert.equal(el.object3D.visible, false);
+      component.tick(0, 500);
+      assert.equal(el.object3D.visible, true);
+    });
+
+    test('can toggle from false to true via bools', function () {
+      el.setAttribute('animation', {property: 'visible', from: false, to: true, dur: 1000});
+      component.tick(0, 1);
+      assert.equal(el.object3D.visible, false);
+      component.tick(0, 500);
+      assert.equal(el.object3D.visible, false);
+      component.tick(0, 500);
+      assert.equal(el.object3D.visible, true);
+    });
+  });
+
   suite('dir (direction)', () => {
     test('can reverse', function () {
       el.setAttribute('animation', {

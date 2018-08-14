@@ -295,10 +295,11 @@ module.exports.Component = registerComponent('animation', {
     }
 
     // Convert booleans to integer to allow boolean flipping.
-    isBoolean = to === 'true' || to === 'false';
+    isBoolean = data.to === 'true' || data.to === 'false' ||
+                data.to === true || data.to === false;
     if (isBoolean) {
-      from = data.from === 'true' ? 1 : 0;
-      to = data.to === 'true' ? 1 : 0;
+      from = data.from === 'true' || data.from === true ? 1 : 0;
+      to = data.to === 'true' || data.to === true ? 1 : 0;
     }
 
     this.targets.aframeProperty = from;
