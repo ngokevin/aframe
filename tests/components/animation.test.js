@@ -9,10 +9,11 @@ suite('animation', function () {
     this.done = false;
     el = entityFactory();
     el.setAttribute('animation', '');
-    el.addEventListener('componentinitialized', function (evt) {
+    el.addEventListener('componentinitialized', function handler (evt) {
       if (evt.detail.name !== 'animation' || this.done) { return; }
       component = el.components.animation;
       this.done = true;
+      el.removeEventListener('componentinitialized', handler);
       done();
     });
   });
@@ -168,6 +169,40 @@ suite('animation', function () {
     });
   });
 
+  suite('vec3 animation', () => {
+    test('can animate vec3', function () {
+      el.setAttribute('animation', {
+        property: 'position',
+        dur: 1000,
+        from: '1 1 1',
+        to: '0 0 0'
+      });
+      component.tick(0, 1);
+      assert.equal(el.object3D.position.x, 1);
+      assert.equal(el.object3D.position.y, 1);
+      assert.equal(el.object3D.position.z, 1);
+      component.tick(0, 500);
+      assert.ok(el.object3D.position.x > 0);
+      assert.ok(el.object3D.position.x < 1);
+      component.tick(0, 500);
+      assert.equal(el.object3D.position.x, 0);
+      assert.equal(el.object3D.position.y, 0);
+      assert.equal(el.object3D.position.z, 0);
+    });
+
+    test('can infer from value', function () {
+      el.object3D.position.set(5, 5, 5);
+      el.setAttribute('animation', {
+        property: 'position',
+        dur: 1000,
+        to: '10 10 10'
+      });
+      assert.equal(component.config.targets[0].x, 5);
+      assert.equal(component.config.targets[0].y, 5);
+      assert.equal(component.config.targets[0].z, 5);
+    });
+  });
+
   suite('dir (direction)', () => {
     test('can reverse', function () {
       el.setAttribute('animation', {
@@ -230,6 +265,36 @@ suite('animation', function () {
     });
   });
 
+  test('can set easing', function () {
+    el.setAttribute('animation', {
+      property: 'light.intensity',
+      from: 0,
+      to: 1,
+      easing: 'easeInOutCubic'
+    });
+    assert.equal(component.config.easing, 'easeInOutCubic');
+  });
+
+  test('can set round', function () {
+    el.setAttribute('animation', {
+      property: 'light.intensity',
+      from: 0,
+      to: 1,
+      round: true
+    });
+    assert.equal(component.config.round, true);
+  });
+
+  test('can set elasticity', function () {
+    el.setAttribute('animation', {
+      property: 'light.intensity',
+      from: 0,
+      to: 1,
+      elasticity: 2
+    });
+    assert.equal(component.config.elasticity, 2);
+  });
+
   suite('startAnimation', function () {
     test('plays by default', function () {
       el.setAttribute('animation', {property: 'position'});
@@ -260,8 +325,9 @@ suite('animation', function () {
     test('plays on startEvents', function (done) {
       el.setAttribute('animation', {property: 'position', startEvents: ['foo', 'far']});
       assert.notOk(component.animationIsPlaying);
-      el.addEventListener('foo', function () {
+      el.addEventListener('foo', function handler () {
         assert.ok(component.animationIsPlaying);
+        el.removeEventListener('foo', handler);
         done();
       });
       el.emit('foo');
@@ -275,21 +341,23 @@ suite('animation', function () {
         startEvents: ['foo', 'foo2']
       });
 
-      el.addEventListener('foo', function () {
+      el.addEventListener('foo', function handler () {
         assert.ok(component.animationIsPlaying);
         assert.equal(el.object3D.scale.z, 1);
         component.tick(0, 1);
         component.tick(0, 550);
         assert.ok(el.object3D.scale.z > 1);
         el.emit('foo2');
+        el.removeEventListener('foo', handler);
       });
 
-      el.addEventListener('foo2', function () {
+      el.addEventListener('foo2', function handler2 () {
         component.tick(0, 1);
         assert.ok(component.animationIsPlaying);
         assert.equal(el.object3D.scale.z, 1);
         component.tick(0, 550);
         assert.ok(el.object3D.scale.z > 1);
+        el.removeEventListener('foo2', handler2);
         done();
       });
 
@@ -299,11 +367,12 @@ suite('animation', function () {
     });
 
     test('pauses on pauseEvents', function (done) {
-      el.setAttribute('animation', {property: 'position', pauseEvents: 'bar boo'});
+      el.setAttribute('animation', {property: 'position', pauseEvents: 'bar, boo'});
       assert.ok(component.animationIsPlaying);
-      el.addEventListener('bar', function () {
+      el.addEventListener('bar', function handler () {
         setTimeout(() => {
           assert.notOk(component.animationIsPlaying);
+          el.removeEventListener('bar', handler);
           done();
         });
       });
@@ -320,16 +389,18 @@ suite('animation', function () {
         pauseEvents: 'bar',
         resumeEvents: 'qux'
       });
-      el.addEventListener('bar', function () {
+      el.addEventListener('bar', function handler () {
         assert.notOk(component.animationIsPlaying);
+        el.removeEventListener('bar', handler);
         el.emit('qux');
       });
-      el.addEventListener('qux', function () {
+      el.addEventListener('qux', function handler2 () {
         assert.ok(component.animationIsPlaying);
         assert.ok(el.components.text.material.uniforms.opacity.value > 0, 'More than 0');
         assert.ok(el.components.text.material.uniforms.opacity.value < 1, 'Less than 1');
         component.tick(0, 500);
         assert.equal(el.components.text.material.uniforms.opacity.value, 1);
+        el.removeEventListener('qux', handler2);
         done();
       });
 
@@ -402,6 +473,49 @@ suite('animation', function () {
       assert.ok(component.animationIsPlaying);
       el.removeAttribute('animation');
       assert.notOk(component.animationIsPlaying);
+    });
+
+    test('removes event listeners', function (done) {
+      el.setAttribute('animation', {property: 'position', startEvents: 'foo'});
+      el.removeAttribute('animation');
+      el.emit('foo');
+      setTimeout(() => {
+        assert.notOk(component.animationIsPlaying);
+        done();
+      }, 10);
+    });
+  });
+
+  suite('stopRelatedAnimations', function () {
+    test('stops related animations', function (done) {
+      el.setAttribute('animation__mouseenter', {
+        property: 'position',
+        startEvents: 'mouseenter',
+        dur: 10000
+      });
+
+      el.setAttribute('animation__mouseleave', {
+        property: 'position',
+        startEvents: 'mouseleave',
+        dur: 10000
+      });
+
+      let mouseenterComponent = el.components['animation__mouseenter'];
+      let mouseleaveComponent = el.components['animation__mouseleave'];
+      assert.notOk(mouseenterComponent.animationIsPlaying);
+      assert.notOk(mouseleaveComponent.animationIsPlaying);
+
+      el.emit('mouseenter');
+      setTimeout(() => {
+        assert.ok(mouseenterComponent.animationIsPlaying);
+        assert.notOk(mouseleaveComponent.animationIsPlaying);
+        el.emit('mouseleave');
+        setTimeout(() => {
+          assert.notOk(mouseenterComponent.animationIsPlaying);
+          assert.ok(mouseleaveComponent.animationIsPlaying);
+          done();
+        }, 10);
+      }, 10);
     });
   });
 

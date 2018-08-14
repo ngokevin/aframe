@@ -61,6 +61,7 @@ module.exports.Component = registerComponent('animation', {
     startEvents: {type: 'array'},
     pauseEvents: {type: 'array'},
     resumeEvents: {type: 'array'},
+    round: {default: false},
     to: {default: ''},
     type: {default: ''},
     isRawProperty: {default: false}
@@ -97,7 +98,7 @@ module.exports.Component = registerComponent('animation', {
     };
   },
 
-  update: function () {
+  update: function (oldData) {
     var config = this.config;
     var data = this.data;
 
@@ -112,6 +113,7 @@ module.exports.Component = registerComponent('animation', {
     config.easing = data.easing;
     config.elasticity = data.elasticity;
     config.loop = data.loop;
+    config.round = data.round;
 
     // Start new animation.
     this.createAndStartAnimation();
