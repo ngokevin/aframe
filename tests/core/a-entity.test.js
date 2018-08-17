@@ -23,7 +23,7 @@ var TestComponent = {
   tock: function () { }
 };
 
-suite('a-entity', function () {
+suite.only('a-entity', function () {
   var el;
 
   setup(function (done) {
