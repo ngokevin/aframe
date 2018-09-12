@@ -307,17 +307,8 @@ module.exports.AScene = registerElement('a-scene', {
 
         exitFullscreen();
         // Handle exiting VR if not yet already and in a headset or polyfill.
-<<<<<<< HEAD
         if (this.checkHeadsetConnected() || this.isMobile) {
-          this.renderer.vr.enabled = false;
-          vrDisplay = utils.device.getVRDisplay();
-          if (vrDisplay.isPresenting) {
-            return vrDisplay.exitPresent().then(exitVRSuccess, exitVRFailure);
-          }
-=======
-        if (!fromExternal && (this.checkHeadsetConnected() || this.isMobile)) {
           return this.effect.exitPresent().then(exitVRSuccess, exitVRFailure);
->>>>>>> e2b1c2583... Go back to VREffects / VRControls
         }
 
         // Handle exiting VR in all other cases (2D fullscreen, external exit VR event).
@@ -384,12 +375,8 @@ module.exports.AScene = registerElement('a-scene', {
         var display = evt.display || evt.detail.display;
         // Entering VR.
         if (display.isPresenting) {
-<<<<<<< HEAD
-          this.enterVR();
-=======
           this.enterVR(true);
           this.effectComposer.reset();
->>>>>>> e2b1c2583... Go back to VREffects / VRControls
           return;
         }
         // Exiting VR.
@@ -477,16 +464,7 @@ module.exports.AScene = registerElement('a-scene', {
         var embedded;
         var isVRPresenting;
         var size;
-<<<<<<< HEAD
-        var vrDevice;
-
-        vrDevice = this.renderer.vr.getDevice();
-        isVRPresenting = this.renderer.vr.enabled && vrDevice && vrDevice.isPresenting;
-
-=======
-        var isVRPresenting;
         isVRPresenting = this.effect.isPresenting;
->>>>>>> e2b1c2583... Go back to VREffects / VRControls
         // Do not update renderer, if a camera or a canvas have not been injected.
         // In VR mode, three handles canvas resize based on the dimensions returned by
         // the getEyeParameters function of the WebVR API. These dimensions are independent of
