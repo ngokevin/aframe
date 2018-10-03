@@ -376,7 +376,7 @@ module.exports.AScene = registerElement('a-scene', {
         // Entering VR.
         if (display.isPresenting) {
           this.enterVR(true);
-          this.effectComposer.reset();
+          this.effectComposer && this.effectComposer.reset();
           return;
         }
         // Exiting VR.
@@ -661,6 +661,8 @@ module.exports.AScene = registerElement('a-scene', {
         }
 
         if (this.isPlaying) { this.tock(this.time, this.delta, this.camera); }
+
+        this.components.overlay && this.components.overlay.render();
 
         effect.submitFrame();
       },

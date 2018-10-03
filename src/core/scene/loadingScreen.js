@@ -3,6 +3,7 @@ var utils = require('../../utils/');
 var styleParser = utils.styleParser;
 
 var sceneEl;
+var raf;
 var titleEl;
 var getSceneCanvasSize;
 
@@ -52,7 +53,8 @@ module.exports.setup = function setup (el, getCanvasSize) {
   clock = new THREE.Clock();
   time = 0;
   render = function () {
-    sceneEl.renderer.render(loaderScene, camera);
+    raf = sceneEl.effect.requestAnimationFrame(render);
+    sceneEl.effect.render(loaderScene, camera);
     time = clock.getElapsedTime() % 4;
     sphereMesh1.visible = time >= 1;
     sphereMesh2.visible = time >= 2;
@@ -75,7 +77,7 @@ module.exports.setup = function setup (el, getCanvasSize) {
     resize(camera);
     titleEl.style.display = 'block';
     window.addEventListener('resize', function () { resize(camera); });
-    sceneEl.renderer.setAnimationLoop(render);
+    render();
   }, 200);
 };
 
@@ -84,6 +86,7 @@ module.exports.remove = function remove () {
   if (!titleEl) { return; }
   // Hide title.
   titleEl.style.display = 'none';
+  sceneEl.effect.cancelAnimationFrame(raf);
 };
 
 function resize (camera) {
