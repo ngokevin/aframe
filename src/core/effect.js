@@ -41,6 +41,7 @@ var proto = {
       if (!passes[effect]) { return; }
       effectComposer.addPass(passes[effect]);
     });
+    effectComposer.reset();
   },
 
   remove: function () {
