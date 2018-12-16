@@ -102,7 +102,6 @@ module.exports.Component = registerComponent('tracked-controls-webvr', {
     this.controller = controller;
     // Legacy handle to the controller for old components.
     this.el.components['tracked-controls'].controller = controller;
-    this.el.object3D.visible = !!this.controller;
   },
 
   /**
